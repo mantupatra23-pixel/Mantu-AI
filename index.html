@@ -17,7 +17,7 @@ h2{
 }
 
 #chat{
-    height:55vh;
+    height:50vh;
     overflow-y:auto;
     padding:15px;
 }
@@ -58,51 +58,33 @@ input{
     flex:1;
     padding:12px;
     border:1px solid #e2e8f0;
-    outline:none;
     border-radius:10px;
 }
 
 button{
-    margin-left:10px;
-    padding:12px 16px;
+    margin-top:8px;
+    padding:12px;
     border:none;
     border-radius:10px;
     font-weight:bold;
     cursor:pointer;
-}
-
-.send-btn{
-    background:#22c55e;
-    color:white;
-}
-
-.create-btn{
-    background:#f59e0b;
-    color:white;
-    margin-top:10px;
     width:100%;
 }
 
-.full-btn{
-    background:#6366f1;
-    color:white;
-    margin-top:10px;
-    width:100%;
-}
-
-.deploy-btn{
-    background:#10b981;
-    color:white;
-    margin-top:10px;
-    width:100%;
-}
+.send-btn{background:#22c55e;color:white;}
+.create-btn{background:#f59e0b;color:white;}
+.full-btn{background:#6366f1;color:white;}
+.deploy-btn{background:#10b981;color:white;}
+.project-btn{background:#3b82f6;color:white;}
+.template-btn{background:#ec4899;color:white;}
+.track-btn{background:#0ea5e9;color:white;}
 </style>
 
 </head>
 
 <body>
 
-<h2>🤖 Mantu AI (Premium)</h2>
+<h2>🤖 Mantu AI (Ultimate SaaS)</h2>
 
 <div id="chat"></div>
 
@@ -110,34 +92,35 @@ button{
 
     <div class="input-area">
         <input id="prompt" placeholder="Type message or project name..."/>
-        <button class="send-btn" onclick="send()">Send</button>
     </div>
 
+    <button class="send-btn" onclick="send()">💬 Chat</button>
     <button class="create-btn" onclick="createProject()">🚀 Create Project</button>
-    <button class="full-btn" onclick="fullBuild()">🔥 Full Build (GitHub)</button>
+    <button class="full-btn" onclick="fullBuild()">🔥 Full Build</button>
     <button class="deploy-btn" onclick="deploy()">🌐 Auto Deploy</button>
+    <button class="project-btn" onclick="fullProject()">🧱 Generate Full App</button>
+    <button class="template-btn" onclick="template()">🎨 Use Template</button>
+    <button class="track-btn" onclick="track()">📊 Track Deploy</button>
 
 </div>
 
 <script>
 
-// 🔥 CHAT WITH HISTORY
+// 💬 CHAT
 async function send(){
-    let input = document.getElementById("prompt");
-    let text = input.value;
-
+    let text=document.getElementById("prompt").value;
     if(!text) return;
 
-    let res = await fetch("/chat",{
+    let res=await fetch("/chat",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({text})
     });
 
-    let data = await res.json();
+    let data=await res.json();
 
-    let chat = document.getElementById("chat");
-    chat.innerHTML = "";
+    let chat=document.getElementById("chat");
+    chat.innerHTML="";
 
     data.history.forEach(msg=>{
         if(msg.user){
@@ -148,89 +131,89 @@ async function send(){
         }
     });
 
-    chat.scrollTop = chat.scrollHeight;
-
-    input.value = "";
+    chat.scrollTop=chat.scrollHeight;
+    document.getElementById("prompt").value="";
 }
-
 
 // 🚀 CREATE PROJECT
 async function createProject(){
-    let input = document.getElementById("prompt");
-    let text = input.value;
+    let text=document.getElementById("prompt").value;
+    if(!text) return alert("Enter name");
 
-    if(!text){
-        alert("⚠️ Enter project name first");
-        return;
-    }
-
-    let res = await fetch("/create-project",{
+    let res=await fetch("/create-project",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({text})
     });
 
-    let data = await res.json();
-    alert(data.msg);
-
-    input.value = "";
+    alert((await res.json()).msg);
 }
-
 
 // 🔥 FULL BUILD
 async function fullBuild(){
-    let input = document.getElementById("prompt");
-    let text = input.value;
-
-    if(!text){
-        alert("⚠️ Enter project name first");
-        return;
-    }
-
-    let res = await fetch("/full-build",{
+    let text=document.getElementById("prompt").value;
+    let res=await fetch("/full-build",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({text})
     });
 
-    let data = await res.json();
-
-    alert("🚀 Repo Created:\n" + data.repo);
-
-    input.value = "";
+    let data=await res.json();
+    alert(data.repo);
 }
 
-
-// 🌐 AUTO DEPLOY
+// 🌐 DEPLOY
 async function deploy(){
-    let input = document.getElementById("prompt");
-    let text = input.value;
-
-    if(!text){
-        alert("⚠️ Enter project name first");
-        return;
-    }
-
-    let res = await fetch("/auto-deploy",{
+    let text=document.getElementById("prompt").value;
+    let res=await fetch("/auto-deploy",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({text})
     });
 
-    let data = await res.json();
-
-    alert("🌐 Deploy Started 🚀\nRepo:\n" + data.repo);
-
-    input.value = "";
+    let data=await res.json();
+    alert("Deploy Started:\n"+data.repo);
 }
 
+// 🧱 FULL APP
+async function fullProject(){
+    let text=document.getElementById("prompt").value;
+    let res=await fetch("/generate-full-project",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({text})
+    });
 
-// ⌨️ ENTER SUPPORT
-document.getElementById("prompt").addEventListener("keypress", function(e){
-    if(e.key === "Enter"){
-        send();
-    }
-});
+    alert((await res.json()).msg);
+}
+
+// 🎨 TEMPLATE
+async function template(){
+    let text=document.getElementById("prompt").value;
+
+    let res=await fetch("/template",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({text})
+    });
+
+    let data=await res.json();
+    document.getElementById("chat").innerHTML=data.html;
+}
+
+// 📊 TRACK DEPLOY
+async function track(){
+    let text=document.getElementById("prompt").value;
+
+    let res=await fetch("/track-deploy",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({text})
+    });
+
+    let data=await res.json();
+    alert(JSON.stringify(data.logs,null,2));
+}
 
 </script>
 

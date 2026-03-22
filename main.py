@@ -28,6 +28,16 @@ class Prompt(BaseModel):
 # =========================
 chat_history = []
 projects = []
+deploy_logs = []
+
+# =========================
+# 🎨 TEMPLATE SYSTEM
+# =========================
+templates = {
+    "blog": "<h1>📝 Blog App</h1><p>Start writing posts</p>",
+    "todo": "<h1>✅ Todo App</h1><p>Manage tasks easily</p>",
+    "ai": "<h1>🤖 AI App</h1><p>Build AI tools</p>"
+}
 
 # =========================
 # 🌐 FRONTEND
@@ -157,14 +167,12 @@ def full_build(prompt: Prompt):
         with open(f"{project}/requirements.txt", "w") as f:
             f.write("fastapi\nuvicorn\n")
 
-        # create repo
         requests.post(
             "https://api.github.com/user/repos",
             headers={"Authorization": f"token {GITHUB_TOKEN}"},
             json={"name": project}
         )
 
-        # push
         os.system(f"cd {project} && git init")
         os.system(f"cd {project} && git add .")
         os.system(f"cd {project} && git commit -m 'init'")
@@ -181,14 +189,13 @@ def full_build(prompt: Prompt):
         return {"msg": f"❌ {str(e)}"}
 
 # =========================
-# 🌐 AUTO DEPLOY SYSTEM
+# 🌐 AUTO DEPLOY
 # =========================
 @app.post("/auto-deploy")
 def auto_deploy(prompt: Prompt):
     try:
         name = prompt.text.strip().replace(" ", "-")
 
-        # create project
         os.makedirs(name, exist_ok=True)
 
         with open(f"{name}/main.py", "w") as f:
@@ -197,20 +204,24 @@ def auto_deploy(prompt: Prompt):
         with open(f"{name}/requirements.txt", "w") as f:
             f.write("fastapi\nuvicorn\n")
 
-        # create repo
         requests.post(
             "https://api.github.com/user/repos",
             headers={"Authorization": f"token {GITHUB_TOKEN}"},
             json={"name": name}
         )
 
-        # push code
         os.system(f"cd {name} && git init")
         os.system(f"cd {name} && git add .")
         os.system(f"cd {name} && git commit -m 'init'")
         os.system(f"cd {name} && git branch -M main")
         os.system(f"cd {name} && git remote add origin https://{GITHUB_TOKEN}@github.com/{GITHUB_USERNAME}/{name}.git")
         os.system(f"cd {name} && git push -u origin main")
+
+        # track log
+        deploy_logs.append({
+            "project": name,
+            "status": "deploying..."
+        })
 
         return {
             "msg": "🚀 Deploy Started",
@@ -219,3 +230,58 @@ def auto_deploy(prompt: Prompt):
 
     except Exception as e:
         return {"msg": f"❌ {str(e)}"}
+
+# =========================
+# 🧱 FULL PROJECT GENERATOR
+# =========================
+@app.post("/generate-full-project")
+def generate_full_project(prompt: Prompt):
+    try:
+        name = prompt.text.strip().replace(" ", "-")
+
+        os.makedirs(f"{name}/backend", exist_ok=True)
+        os.makedirs(f"{name}/frontend", exist_ok=True)
+
+        with open(f"{name}/backend/main.py", "w") as f:
+            f.write("""from fastapi import FastAPI
+app = FastAPI()
+
+@app.get("/")
+def home():
+    return {"msg":"Hello from backend"}
+""")
+
+        with open(f"{name}/frontend/index.html", "w") as f:
+            f.write(f"<h1>{prompt.text} App</h1><p>Frontend Ready 🚀</p>")
+
+        with open(f"{name}/requirements.txt", "w") as f:
+            f.write("fastapi\nuvicorn\n")
+
+        return {"msg": "🔥 Full Project Generated", "project": name}
+
+    except Exception as e:
+        return {"msg": f"❌ {str(e)}"}
+
+# =========================
+# 🎨 TEMPLATE API
+# =========================
+@app.post("/template")
+def use_template(prompt: Prompt):
+    name = prompt.text.lower()
+    content = templates.get(name, "<h1>⚡ Custom App</h1>")
+    return {"html": content}
+
+# =========================
+# 📊 DEPLOY TRACKING
+# =========================
+@app.post("/track-deploy")
+def track(prompt: Prompt):
+    deploy_logs.append({
+        "project": prompt.text,
+        "status": "deploying..."
+    })
+    return {"logs": deploy_logs}
+
+@app.get("/deploy-logs")
+def get_logs():
+    return {"logs": deploy_logs}
