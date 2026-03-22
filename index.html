@@ -3,216 +3,97 @@
 <head>
 <title>Mantu AI</title>
 
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
 body{
-    font-family: Arial;
-    background:#f8fafc;
-    color:#0f172a;
     margin:0;
+    font-family:Arial;
+    background:#f8fafc;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
+
+.box{
+    background:white;
+    padding:20px;
+    border-radius:12px;
+    width:90%;
+    max-width:400px;
+    box-shadow:0 5px 20px rgba(0,0,0,0.1);
 }
 
 h2{
     text-align:center;
-    padding:15px;
-}
-
-#chat{
-    height:50vh;
-    overflow-y:auto;
-    padding:15px;
-}
-
-.msg{
-    margin:10px;
-    padding:12px;
-    border-radius:12px;
-    max-width:80%;
-    box-shadow:0 2px 8px rgba(0,0,0,0.05);
-}
-
-.user{
-    background:#2563eb;
-    color:white;
-    margin-left:auto;
-}
-
-.ai{
-    background:white;
-    border:1px solid #e2e8f0;
-}
-
-.bottom{
-    position:fixed;
-    bottom:0;
-    width:100%;
-    padding:15px;
-    background:white;
-    border-top:1px solid #e2e8f0;
-}
-
-.input-area{
-    display:flex;
 }
 
 input{
-    flex:1;
+    width:100%;
     padding:12px;
-    border:1px solid #e2e8f0;
     border-radius:10px;
+    border:1px solid #e2e8f0;
+    margin-top:10px;
 }
 
 button{
-    margin-top:8px;
+    width:100%;
     padding:12px;
+    margin-top:15px;
     border:none;
     border-radius:10px;
+    background:black;
+    color:white;
     font-weight:bold;
-    cursor:pointer;
-    width:100%;
 }
 
-.send-btn{background:#22c55e;color:white;}
-.create-btn{background:#f59e0b;color:white;}
-.full-btn{background:#6366f1;color:white;}
-.deploy-btn{background:#10b981;color:white;}
-.project-btn{background:#3b82f6;color:white;}
-.template-btn{background:#ec4899;color:white;}
-.track-btn{background:#0ea5e9;color:white;}
+.loader{
+    text-align:center;
+    margin-top:10px;
+    display:none;
+}
 </style>
 
 </head>
 
 <body>
 
-<h2>🤖 Mantu AI (Ultimate SaaS)</h2>
+<div class="box">
 
-<div id="chat"></div>
+<h2>⚡ Mantu AI</h2>
 
-<div class="bottom">
+<input id="prompt" placeholder="Build app (e.g. blog app)">
 
-    <div class="input-area">
-        <input id="prompt" placeholder="Type message or project name..."/>
-    </div>
+<button onclick="generate()">🚀 Generate App</button>
 
-    <button class="send-btn" onclick="send()">💬 Chat</button>
-    <button class="create-btn" onclick="createProject()">🚀 Create Project</button>
-    <button class="full-btn" onclick="fullBuild()">🔥 Full Build</button>
-    <button class="deploy-btn" onclick="deploy()">🌐 Auto Deploy</button>
-    <button class="project-btn" onclick="fullProject()">🧱 Generate Full App</button>
-    <button class="template-btn" onclick="template()">🎨 Use Template</button>
-    <button class="track-btn" onclick="track()">📊 Track Deploy</button>
+<div class="loader" id="loader">⏳ Building your app...</div>
 
 </div>
 
 <script>
 
-// 💬 CHAT
-async function send(){
-    let text=document.getElementById("prompt").value;
-    if(!text) return;
+async function generate(){
+ let text=document.getElementById("prompt").value;
 
-    let res=await fetch("/chat",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({text})
-    });
+ if(!text){
+  alert("Enter idea first");
+  return;
+ }
 
-    let data=await res.json();
+ document.getElementById("loader").style.display="block";
 
-    let chat=document.getElementById("chat");
-    chat.innerHTML="";
+ // Step 1: generate project
+ await fetch("/generate-full-project",{
+  method:"POST",
+  headers:{"Content-Type":"application/json"},
+  body:JSON.stringify({text})
+ });
 
-    data.history.forEach(msg=>{
-        if(msg.user){
-            chat.innerHTML += `<div class="msg user">You: ${msg.user}</div>`;
-        }
-        if(msg.ai){
-            chat.innerHTML += `<div class="msg ai">AI: ${msg.ai}</div>`;
-        }
-    });
-
-    chat.scrollTop=chat.scrollHeight;
-    document.getElementById("prompt").value="";
-}
-
-// 🚀 CREATE PROJECT
-async function createProject(){
-    let text=document.getElementById("prompt").value;
-    if(!text) return alert("Enter name");
-
-    let res=await fetch("/create-project",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({text})
-    });
-
-    alert((await res.json()).msg);
-}
-
-// 🔥 FULL BUILD
-async function fullBuild(){
-    let text=document.getElementById("prompt").value;
-    let res=await fetch("/full-build",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({text})
-    });
-
-    let data=await res.json();
-    alert(data.repo);
-}
-
-// 🌐 DEPLOY
-async function deploy(){
-    let text=document.getElementById("prompt").value;
-    let res=await fetch("/auto-deploy",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({text})
-    });
-
-    let data=await res.json();
-    alert("Deploy Started:\n"+data.repo);
-}
-
-// 🧱 FULL APP
-async function fullProject(){
-    let text=document.getElementById("prompt").value;
-    let res=await fetch("/generate-full-project",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({text})
-    });
-
-    alert((await res.json()).msg);
-}
-
-// 🎨 TEMPLATE
-async function template(){
-    let text=document.getElementById("prompt").value;
-
-    let res=await fetch("/template",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({text})
-    });
-
-    let data=await res.json();
-    document.getElementById("chat").innerHTML=data.html;
-}
-
-// 📊 TRACK DEPLOY
-async function track(){
-    let text=document.getElementById("prompt").value;
-
-    let res=await fetch("/track-deploy",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({text})
-    });
-
-    let data=await res.json();
-    alert(JSON.stringify(data.logs,null,2));
+ // Step 2: redirect
+ setTimeout(()=>{
+   window.location.href="/landing";
+ },1500);
 }
 
 </script>

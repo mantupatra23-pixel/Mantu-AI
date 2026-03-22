@@ -46,6 +46,10 @@ templates = {
 def home():
     return open("index.html").read()
 
+@app.get("/", response_class=HTMLResponse)
+def landing():
+    return open("landing.html").read()
+
 # =========================
 # 🤖 AI CHAT
 # =========================
