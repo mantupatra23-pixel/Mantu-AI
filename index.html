@@ -17,7 +17,7 @@ h2{
 }
 
 #chat{
-    height:60vh;
+    height:55vh;
     overflow-y:auto;
     padding:15px;
 }
@@ -89,6 +89,13 @@ button{
     margin-top:10px;
     width:100%;
 }
+
+.deploy-btn{
+    background:#10b981;
+    color:white;
+    margin-top:10px;
+    width:100%;
+}
 </style>
 
 </head>
@@ -108,6 +115,7 @@ button{
 
     <button class="create-btn" onclick="createProject()">🚀 Create Project</button>
     <button class="full-btn" onclick="fullBuild()">🔥 Full Build (GitHub)</button>
+    <button class="deploy-btn" onclick="deploy()">🌐 Auto Deploy</button>
 
 </div>
 
@@ -188,6 +196,30 @@ async function fullBuild(){
     let data = await res.json();
 
     alert("🚀 Repo Created:\n" + data.repo);
+
+    input.value = "";
+}
+
+
+// 🌐 AUTO DEPLOY
+async function deploy(){
+    let input = document.getElementById("prompt");
+    let text = input.value;
+
+    if(!text){
+        alert("⚠️ Enter project name first");
+        return;
+    }
+
+    let res = await fetch("/auto-deploy",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({text})
+    });
+
+    let data = await res.json();
+
+    alert("🌐 Deploy Started 🚀\nRepo:\n" + data.repo);
 
     input.value = "";
 }

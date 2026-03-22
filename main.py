@@ -18,7 +18,7 @@ GITHUB_USERNAME = os.getenv("GITHUB_USERNAME")
 app = FastAPI()
 
 # =========================
-# 📦 MODELS
+# 📦 MODEL
 # =========================
 class Prompt(BaseModel):
     text: str
@@ -37,36 +37,34 @@ def home():
     return open("index.html").read()
 
 # =========================
-# 🤖 AI CHAT (GROQ + MEMORY)
+# 🤖 AI CHAT
 # =========================
 @app.post("/generate")
 def generate(prompt: Prompt):
-    url = "https://api.groq.com/openai/v1/chat/completions"
-
-    headers = {
-        "Authorization": f"Bearer {GROQ_API_KEY}",
-        "Content-Type": "application/json"
-    }
-
-    messages = [{"role": "system", "content": "You are Mantu AI"}]
-
-    # last 5 history
-    for msg in chat_history[-5:]:
-        if "user" in msg:
-            messages.append({"role": "user", "content": msg["user"]})
-        if "ai" in msg:
-            messages.append({"role": "assistant", "content": msg["ai"]})
-
-    messages.append({"role": "user", "content": prompt.text})
-
     try:
+        url = "https://api.groq.com/openai/v1/chat/completions"
+
+        headers = {
+            "Authorization": f"Bearer {GROQ_API_KEY}",
+            "Content-Type": "application/json"
+        }
+
+        messages = [{"role": "system", "content": "You are Mantu AI"}]
+
+        for msg in chat_history[-5:]:
+            if "user" in msg:
+                messages.append({"role": "user", "content": msg["user"]})
+            if "ai" in msg:
+                messages.append({"role": "assistant", "content": msg["ai"]})
+
+        messages.append({"role": "user", "content": prompt.text})
+
         res = requests.post(url, headers=headers, json={
             "model": "llama3-70b-8192",
             "messages": messages
         })
 
-        result = res.json()
-        reply = result["choices"][0]["message"]["content"]
+        reply = res.json()["choices"][0]["message"]["content"]
 
         chat_history.append({"user": prompt.text})
         chat_history.append({"ai": reply})
@@ -77,15 +75,13 @@ def generate(prompt: Prompt):
         return {"response": f"Error: {str(e)}"}
 
 # =========================
-# 💬 SIMPLE CHAT (TEST)
+# 💬 SIMPLE CHAT
 # =========================
 @app.post("/chat")
 def chat(prompt: Prompt):
     chat_history.append({"user": prompt.text})
-
     response = f"AI: {prompt.text}"
     chat_history.append({"ai": response})
-
     return {"response": response, "history": chat_history}
 
 # =========================
@@ -95,12 +91,10 @@ def chat(prompt: Prompt):
 def create_project(prompt: Prompt):
     try:
         project = prompt.text.strip().replace(" ", "-")
-
         os.makedirs(project, exist_ok=True)
 
         with open(f"{project}/app.py", "w") as f:
             f.write(f"""from fastapi import FastAPI
-
 app = FastAPI()
 
 @app.get("/")
@@ -119,7 +113,7 @@ def home():
         return {"msg": f"❌ {str(e)}"}
 
 # =========================
-# 💾 SAVE PROJECT LIST
+# 💾 SAVE PROJECT
 # =========================
 @app.post("/save-project")
 def save_project(prompt: Prompt):
@@ -133,26 +127,20 @@ def save_project(prompt: Prompt):
 def download(name: str):
     try:
         zip_file = shutil.make_archive(name, 'zip', name)
-
-        return FileResponse(
-            path=zip_file,
-            filename=f"{name}.zip",
-            media_type="application/zip"
-        )
-
+        return FileResponse(path=zip_file, filename=f"{name}.zip", media_type="application/zip")
     except Exception as e:
         return {"msg": f"❌ {str(e)}"}
 
 # =========================
-# 🔧 LOCAL GIT INIT
+# 🔧 LOCAL GIT
 # =========================
 def push_to_git(project):
     try:
         os.system(f"cd {project} && git init")
         os.system(f"cd {project} && git add .")
         os.system(f"cd {project} && git commit -m 'init'")
-    except Exception as e:
-        print("Git Error:", e)
+    except:
+        pass
 
 # =========================
 # 🚀 FULL BUILD (GITHUB PUSH)
@@ -161,7 +149,6 @@ def push_to_git(project):
 def full_build(prompt: Prompt):
     try:
         project = prompt.text.strip().replace(" ", "-")
-
         os.makedirs(project, exist_ok=True)
 
         with open(f"{project}/app.py", "w") as f:
@@ -188,6 +175,46 @@ def full_build(prompt: Prompt):
         return {
             "msg": "🚀 Project Created & Pushed",
             "repo": f"https://github.com/{GITHUB_USERNAME}/{project}"
+        }
+
+    except Exception as e:
+        return {"msg": f"❌ {str(e)}"}
+
+# =========================
+# 🌐 AUTO DEPLOY SYSTEM
+# =========================
+@app.post("/auto-deploy")
+def auto_deploy(prompt: Prompt):
+    try:
+        name = prompt.text.strip().replace(" ", "-")
+
+        # create project
+        os.makedirs(name, exist_ok=True)
+
+        with open(f"{name}/main.py", "w") as f:
+            f.write("print('Hello from Mantu AI')")
+
+        with open(f"{name}/requirements.txt", "w") as f:
+            f.write("fastapi\nuvicorn\n")
+
+        # create repo
+        requests.post(
+            "https://api.github.com/user/repos",
+            headers={"Authorization": f"token {GITHUB_TOKEN}"},
+            json={"name": name}
+        )
+
+        # push code
+        os.system(f"cd {name} && git init")
+        os.system(f"cd {name} && git add .")
+        os.system(f"cd {name} && git commit -m 'init'")
+        os.system(f"cd {name} && git branch -M main")
+        os.system(f"cd {name} && git remote add origin https://{GITHUB_TOKEN}@github.com/{GITHUB_USERNAME}/{name}.git")
+        os.system(f"cd {name} && git push -u origin main")
+
+        return {
+            "msg": "🚀 Deploy Started",
+            "repo": f"https://github.com/{GITHUB_USERNAME}/{name}"
         }
 
     except Exception as e:
