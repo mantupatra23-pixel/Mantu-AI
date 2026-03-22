@@ -1,99 +1,289 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Mantu AI</title>
-
+<title>Mantu AI Ultra</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
+
 body{
     margin:0;
     font-family:Arial;
-    background:#f8fafc;
     display:flex;
-    justify-content:center;
-    align-items:center;
     height:100vh;
+    overflow:hidden;
 }
 
-.box{
+/* SIDEBAR */
+.sidebar{
+    width:220px;
+    background:#020617;
+    color:white;
+    padding:15px;
+}
+
+.sidebar h2{
+    font-size:18px;
+}
+
+.sidebar button{
+    width:100%;
+    margin:8px 0;
+    padding:10px;
+    border:none;
+    border-radius:8px;
+    background:#1e293b;
+    color:white;
+    cursor:pointer;
+}
+
+/* MAIN */
+.main{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+}
+
+/* TOP BAR */
+.top{
+    padding:10px;
     background:white;
-    padding:20px;
-    border-radius:12px;
-    width:90%;
-    max-width:400px;
-    box-shadow:0 5px 20px rgba(0,0,0,0.1);
+    border-bottom:1px solid #ddd;
+    display:flex;
+    justify-content:space-between;
 }
 
-h2{
-    text-align:center;
+/* BUILDER AREA */
+.builder{
+    flex:1;
+    display:flex;
+}
+
+/* LEFT PANEL */
+.left{
+    width:40%;
+    padding:15px;
+    background:#f8fafc;
+    overflow:auto;
+}
+
+/* RIGHT PANEL (LIVE PREVIEW) */
+.right{
+    width:60%;
+    border-left:1px solid #ddd;
+}
+
+iframe{
+    width:100%;
+    height:100%;
+    border:none;
+}
+
+/* INPUT */
+.input-box{
+    display:flex;
 }
 
 input{
-    width:100%;
+    flex:1;
     padding:12px;
-    border-radius:10px;
-    border:1px solid #e2e8f0;
-    margin-top:10px;
+    border-radius:8px;
+    border:1px solid #ddd;
 }
 
 button{
-    width:100%;
+    margin-left:10px;
     padding:12px;
-    margin-top:15px;
     border:none;
-    border-radius:10px;
-    background:black;
+    border-radius:8px;
+    background:#22c55e;
     color:white;
-    font-weight:bold;
 }
 
-.loader{
-    text-align:center;
-    margin-top:10px;
-    display:none;
+/* CHAT */
+.chat{
+    margin-top:15px;
+    background:white;
+    padding:10px;
+    border-radius:10px;
+    height:150px;
+    overflow:auto;
 }
+
+/* CODE */
+.code{
+    margin-top:15px;
+    background:#0f172a;
+    color:#22c55e;
+    padding:10px;
+    border-radius:10px;
+    height:150px;
+    overflow:auto;
+}
+
 </style>
 
 </head>
 
 <body>
 
-<div class="box">
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <h2>⚡ Mantu AI</h2>
 
-<h2>⚡ Mantu AI</h2>
+    <button onclick="send()">💬 Chat</button>
+    <button onclick="createProject()">🚀 Create</button>
+    <button onclick="fullBuild()">🔥 Build</button>
+    <button onclick="deploy()">🌐 Deploy</button>
+    <button onclick="fullProject()">📦 Full App</button>
+    <button onclick="template()">🎨 Template</button>
+</div>
 
-<input id="prompt" placeholder="Build app (e.g. blog app)">
+<!-- MAIN -->
+<div class="main">
 
-<button onclick="generate()">🚀 Generate App</button>
+<div class="top">
+    <b>AI Builder</b>
+    <button onclick="goHome()">Home</button>
+</div>
 
-<div class="loader" id="loader">⏳ Building your app...</div>
+<div class="builder">
+
+<!-- LEFT -->
+<div class="left">
+
+<div class="input-box">
+    <input id="prompt" placeholder="Type your idea (AI app, blog...)">
+    <button onclick="send()">Generate</button>
+</div>
+
+<div class="chat" id="chat"></div>
+
+<div class="code" id="code">
+# Output code / logs here...
+</div>
+
+</div>
+
+<!-- RIGHT (LIVE PREVIEW) -->
+<div class="right">
+    <iframe id="preview"></iframe>
+</div>
+
+</div>
 
 </div>
 
 <script>
 
-async function generate(){
- let text=document.getElementById("prompt").value;
+// CHAT
+async function send(){
+ let text = document.getElementById("prompt").value;
 
- if(!text){
-  alert("Enter idea first");
-  return;
- }
-
- document.getElementById("loader").style.display="block";
-
- // Step 1: generate project
- await fetch("/generate-full-project",{
+ let res = await fetch("/chat",{
   method:"POST",
   headers:{"Content-Type":"application/json"},
   body:JSON.stringify({text})
  });
 
- // Step 2: redirect
- setTimeout(()=>{
-   window.location.href="/landing";
- },1500);
+ let data = await res.json();
+
+ let chat = document.getElementById("chat");
+ chat.innerHTML = "";
+
+ data.history.forEach(msg=>{
+  if(msg.user){
+   chat.innerHTML += `<div>You: ${msg.user}</div>`;
+  }
+  if(msg.ai){
+   chat.innerHTML += `<div style="color:green">AI: ${msg.ai}</div>`;
+  }
+ });
+}
+
+// CREATE PROJECT
+async function createProject(){
+ let text = document.getElementById("prompt").value;
+
+ let res = await fetch("/create-project",{
+  method:"POST",
+  headers:{"Content-Type":"application/json"},
+  body:JSON.stringify({text})
+ });
+
+ let data = await res.json();
+
+ document.getElementById("code").innerText = data.msg;
+
+ // LIVE PREVIEW
+ document.getElementById("preview").src = "/landing";
+}
+
+// FULL BUILD
+async function fullBuild(){
+ let text = document.getElementById("prompt").value;
+
+ let res = await fetch("/full-build",{
+  method:"POST",
+  headers:{"Content-Type":"application/json"},
+  body:JSON.stringify({text})
+ });
+
+ let data = await res.json();
+
+ document.getElementById("code").innerText = data.repo;
+}
+
+// DEPLOY
+async function deploy(){
+ let text = document.getElementById("prompt").value;
+
+ let res = await fetch("/auto-deploy",{
+  method:"POST",
+  headers:{"Content-Type":"application/json"},
+  body:JSON.stringify({text})
+ });
+
+ let data = await res.json();
+
+ document.getElementById("code").innerText = data.repo;
+}
+
+// FULL APP
+async function fullProject(){
+ let text = document.getElementById("prompt").value;
+
+ let res = await fetch("/generate-full-project",{
+  method:"POST",
+  headers:{"Content-Type":"application/json"},
+  body:JSON.stringify({text})
+ });
+
+ let data = await res.json();
+
+ document.getElementById("code").innerText = data.msg;
+
+ document.getElementById("preview").src = "/landing";
+}
+
+// TEMPLATE
+async function template(){
+ let text = document.getElementById("prompt").value;
+
+ let res = await fetch("/template",{
+  method:"POST",
+  headers:{"Content-Type":"application/json"},
+  body:JSON.stringify({text})
+ });
+
+ let data = await res.json();
+
+ document.getElementById("preview").srcdoc = data.html;
+}
+
+// NAV
+function goHome(){
+ window.location.href="/landing";
 }
 
 </script>

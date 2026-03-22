@@ -40,18 +40,40 @@ templates = {
 }
 
 # =========================
-# 🌐 FRONTEND
+# 🤖 AGENT ROUTER (SMART AI)
 # =========================
-@app.get("/", response_class=HTMLResponse)
-def home():
-    return open("index.html").read()
+def agent_router(text):
+    text = text.lower()
 
+    if "app" in text:
+        return "🚀 Code Agent: Building your app..."
+    elif "deploy" in text:
+        return "☁️ Deploy Agent: Deploying your project..."
+    elif "error" in text:
+        return "🛠 Fix Agent: Fixing errors..."
+    elif "money" in text or "earn" in text:
+        return "💰 Business Agent: Adding earning system..."
+    else:
+        return "🤖 AI: Processing..."
+
+# =========================
+# 🌐 FRONTEND ROUTES
+# =========================
 @app.get("/", response_class=HTMLResponse)
 def landing():
     return open("landing.html").read()
 
+@app.get("/app", response_class=HTMLResponse)
+def app_page():
+    return open("index.html").read()
+
+@app.get("/", response_class=HTMLResponse)
+def entry():
+    return open("start.html").read()
+
+
 # =========================
-# 🤖 AI CHAT
+# 🤖 AI CHAT (GROQ + MEMORY)
 # =========================
 @app.post("/generate")
 def generate(prompt: Prompt):
@@ -89,14 +111,21 @@ def generate(prompt: Prompt):
         return {"response": f"Error: {str(e)}"}
 
 # =========================
-# 💬 SIMPLE CHAT
+# 💬 SMART CHAT (AGENT + MEMORY)
 # =========================
 @app.post("/chat")
 def chat(prompt: Prompt):
-    chat_history.append({"user": prompt.text})
-    response = f"AI: {prompt.text}"
-    chat_history.append({"ai": response})
-    return {"response": response, "history": chat_history}
+    user_msg = prompt.text
+
+    ai_response = agent_router(user_msg)
+
+    chat_history.append({"user": user_msg})
+    chat_history.append({"ai": ai_response})
+
+    return {
+        "response": ai_response,
+        "history": chat_history
+    }
 
 # =========================
 # 🚀 CREATE PROJECT
@@ -141,7 +170,7 @@ def save_project(prompt: Prompt):
 def download(name: str):
     try:
         zip_file = shutil.make_archive(name, 'zip', name)
-        return FileResponse(path=zip_file, filename=f"{name}.zip", media_type="application/zip")
+        return FileResponse(zip_file, filename=f"{name}.zip")
     except Exception as e:
         return {"msg": f"❌ {str(e)}"}
 
@@ -184,10 +213,7 @@ def full_build(prompt: Prompt):
         os.system(f"cd {project} && git remote add origin https://{GITHUB_TOKEN}@github.com/{GITHUB_USERNAME}/{project}.git")
         os.system(f"cd {project} && git push -u origin main")
 
-        return {
-            "msg": "🚀 Project Created & Pushed",
-            "repo": f"https://github.com/{GITHUB_USERNAME}/{project}"
-        }
+        return {"msg": "🚀 Project Created", "repo": f"https://github.com/{GITHUB_USERNAME}/{project}"}
 
     except Exception as e:
         return {"msg": f"❌ {str(e)}"}
@@ -199,7 +225,6 @@ def full_build(prompt: Prompt):
 def auto_deploy(prompt: Prompt):
     try:
         name = prompt.text.strip().replace(" ", "-")
-
         os.makedirs(name, exist_ok=True)
 
         with open(f"{name}/main.py", "w") as f:
@@ -221,16 +246,9 @@ def auto_deploy(prompt: Prompt):
         os.system(f"cd {name} && git remote add origin https://{GITHUB_TOKEN}@github.com/{GITHUB_USERNAME}/{name}.git")
         os.system(f"cd {name} && git push -u origin main")
 
-        # track log
-        deploy_logs.append({
-            "project": name,
-            "status": "deploying..."
-        })
+        deploy_logs.append({"project": name, "status": "deploying..."})
 
-        return {
-            "msg": "🚀 Deploy Started",
-            "repo": f"https://github.com/{GITHUB_USERNAME}/{name}"
-        }
+        return {"msg": "🚀 Deploy Started", "repo": f"https://github.com/{GITHUB_USERNAME}/{name}"}
 
     except Exception as e:
         return {"msg": f"❌ {str(e)}"}
@@ -256,10 +274,7 @@ def home():
 """)
 
         with open(f"{name}/frontend/index.html", "w") as f:
-            f.write(f"<h1>{prompt.text} App</h1><p>Frontend Ready 🚀</p>")
-
-        with open(f"{name}/requirements.txt", "w") as f:
-            f.write("fastapi\nuvicorn\n")
+            f.write(f"<h1>{prompt.text} App</h1>")
 
         return {"msg": "🔥 Full Project Generated", "project": name}
 
@@ -271,21 +286,16 @@ def home():
 # =========================
 @app.post("/template")
 def use_template(prompt: Prompt):
-    name = prompt.text.lower()
-    content = templates.get(name, "<h1>⚡ Custom App</h1>")
-    return {"html": content}
+    return {"html": templates.get(prompt.text.lower(), "<h1>Custom App</h1>")}
 
 # =========================
 # 📊 DEPLOY TRACKING
 # =========================
 @app.post("/track-deploy")
 def track(prompt: Prompt):
-    deploy_logs.append({
-        "project": prompt.text,
-        "status": "deploying..."
-    })
+    deploy_logs.append({"project": prompt.text, "status": "deploying..."})
     return {"logs": deploy_logs}
 
 @app.get("/deploy-logs")
-def get_logs():
+def logs():
     return {"logs": deploy_logs}
