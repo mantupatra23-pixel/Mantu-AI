@@ -54,6 +54,10 @@ def app_page():
 def start_page():
     return open("start.html").read()
 
+@app.get("/builder.html", response_class=HTMLResponse)
+def builder():
+    return open("builder.html").read()
+
 # =========================
 # 🧠 CREATE PROJECT FUNCTION
 # =========================

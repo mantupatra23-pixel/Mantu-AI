@@ -1,218 +1,121 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Mantu AI SaaS</title>
-
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mantu AI</title>
 
 <style>
-
 body{
     margin:0;
-    font-family:Arial;
-    background:#0f172a;
-    color:white;
+    font-family:sans-serif;
+    background:#f8fafc;
 }
 
-/* LAYOUT */
-.container{
+/* HEADER */
+.header{
     display:flex;
-    height:100vh;
-}
-
-/* SIDEBAR */
-.sidebar{
-    width:260px;
-    background:#020617;
-    padding:15px;
-    border-right:1px solid #1e293b;
+    justify-content:space-between;
+    padding:15px 20px;
+    background:white;
+    border-bottom:1px solid #e2e8f0;
 }
 
 .logo{
-    font-size:18px;
     font-weight:bold;
-    margin-bottom:20px;
-    color:#22c55e;
 }
 
-.nav{
-    padding:10px;
-    margin:5px 0;
-    border-radius:8px;
-    cursor:pointer;
-    background:#0f172a;
-}
-
-.nav:hover{
-    background:#1e293b;
-}
-
-/* MAIN */
-.main{
-    flex:1;
-    display:flex;
-    flex-direction:column;
-}
-
-/* TOP BAR */
-.topbar{
-    padding:15px;
-    border-bottom:1px solid #1e293b;
-    display:flex;
-    justify-content:space-between;
-}
-
-.btn{
-    padding:8px 12px;
-    border:none;
-    border-radius:8px;
-    cursor:pointer;
-}
-
-.publish{
-    background:#22c55e;
-    color:white;
-}
-
-/* WORK AREA */
-.workspace{
-    flex:1;
+/* INPUT SECTION */
+.top-box{
     padding:20px;
-    overflow:auto;
+    background:white;
+    border-bottom:1px solid #e2e8f0;
 }
 
-/* HERO BOX */
-.hero{
-    background:#020617;
-    padding:30px;
-    border-radius:12px;
-    text-align:center;
-}
-
-.hero h1{
-    font-size:28px;
-}
-
-/* ACTION BOX */
-.actions{
-    display:grid;
-    grid-template-columns:1fr 1fr 1fr;
+.input-area{
+    display:flex;
     gap:10px;
-    margin-top:20px;
 }
 
-.actions button{
-    padding:12px;
-    border:none;
+.input-area input{
+    flex:1;
+    padding:14px;
     border-radius:10px;
-    font-weight:bold;
+    border:1px solid #ddd;
+}
+
+.input-area button{
+    padding:14px 20px;
+    border:none;
+    background:#6366f1;
+    color:white;
+    border-radius:10px;
     cursor:pointer;
 }
 
-/* COLORS */
-.create{background:#f59e0b;}
-.deploy{background:#10b981;}
-.generate{background:#3b82f6;}
-.full{background:#6366f1;}
-.template{background:#ec4899;}
-.track{background:#06b6d4;}
+/* APPS LIST */
+.apps{
+    padding:20px;
+}
+
+.card{
+    background:white;
+    padding:15px;
+    border-radius:12px;
+    border:1px solid #e2e8f0;
+    margin-bottom:15px;
+}
+
+.card h3{
+    margin:0;
+}
+
+.status{
+    font-size:12px;
+    color:green;
+}
 
 </style>
-
 </head>
 
 <body>
 
-<div class="container">
-
-<!-- SIDEBAR -->
-<div class="sidebar">
+<div class="header">
     <div class="logo">⚡ Mantu AI</div>
-
-    <div class="nav">📊 Dashboard</div>
-    <div class="nav">🚀 Projects</div>
-    <div class="nav">💰 Billing</div>
-    <div class="nav">⚙️ Settings</div>
+    <button onclick="goDashboard()">Dashboard</button>
 </div>
 
-<!-- MAIN -->
-<div class="main">
-
-<div class="topbar">
-    <div>AI SaaS Builder</div>
-    <button class="btn publish">Publish</button>
+<!-- TOP INPUT -->
+<div class="top-box">
+    <div class="input-area">
+        <input id="idea" placeholder="Create with Mantu AI...">
+        <button onclick="generate()">Generate</button>
+    </div>
 </div>
 
-<div class="workspace">
+<!-- APPS LIST -->
+<div class="apps" id="apps">
 
-<div class="hero">
-    <h1>Build AI Apps in Seconds 🚀</h1>
-    <p>Create, Deploy, Earn with AI</p>
-</div>
-
-<!-- ACTION BUTTONS -->
-<div class="actions">
-    <button class="create" onclick="createProject()">Create</button>
-    <button class="deploy" onclick="deploy()">Deploy</button>
-    <button class="generate" onclick="fullProject()">Generate</button>
-    <button class="full" onclick="fullBuild()">Full Build</button>
-    <button class="template" onclick="template()">Template</button>
-    <button class="track" onclick="track()">Track</button>
-</div>
-
-<!-- CHAT BOX -->
-<div style="margin-top:20px;">
-    <input id="prompt" placeholder="Type idea..." style="width:100%;padding:12px;border-radius:10px;border:none;">
-</div>
-
-</div>
-
-</div>
+    <div class="card">
+        <h3>AI SaaS Builder</h3>
+        <p class="status">● Running</p>
+    </div>
 
 </div>
 
 <script>
 
-async function createProject(){
- let text = document.getElementById("prompt").value;
- let res = await fetch("/create-project",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text})});
- let data = await res.json();
- alert(data.msg);
+function generate(){
+    let idea = document.getElementById("idea").value;
+
+    // Save idea (optional)
+    localStorage.setItem("idea", idea);
+
+    // Redirect to builder page
+    window.location.href = "/builder.html";
 }
 
-async function deploy(){
- let text = document.getElementById("prompt").value;
- let res = await fetch("/auto-deploy",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text})});
- let data = await res.json();
- alert("Deploy started 🚀");
-}
-
-async function fullProject(){
- let text = document.getElementById("prompt").value;
- let res = await fetch("/generate-full-project",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text})});
- let data = await res.json();
- alert(data.msg);
-}
-
-async function fullBuild(){
- let text = document.getElementById("prompt").value;
- let res = await fetch("/full-build",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text})});
- let data = await res.json();
- alert(data.repo);
-}
-
-async function template(){
- let text = document.getElementById("prompt").value;
- let res = await fetch("/template",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text})});
- let data = await res.json();
- alert("Template Loaded");
-}
-
-async function track(){
- let text = document.getElementById("prompt").value;
- let res = await fetch("/track-deploy",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text})});
- let data = await res.json();
- alert(JSON.stringify(data.logs));
+function goDashboard(){
+    window.location.href = "/builder.html";
 }
 
 </script>
