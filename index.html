@@ -6,8 +6,8 @@
 <style>
 body{
     font-family: Arial;
-    background:#0f172a;
-    color:white;
+    background:#f8fafc;
+    color:#0f172a;
     margin:0;
 }
 
@@ -17,52 +17,77 @@ h2{
 }
 
 #chat{
-    height:70vh;
+    height:60vh;
     overflow-y:auto;
-    padding:10px;
+    padding:15px;
 }
 
 .msg{
     margin:10px;
-    padding:10px;
-    border-radius:10px;
+    padding:12px;
+    border-radius:12px;
     max-width:80%;
+    box-shadow:0 2px 8px rgba(0,0,0,0.05);
 }
 
 .user{
     background:#2563eb;
+    color:white;
     margin-left:auto;
 }
 
 .ai{
-    background:#1e293b;
+    background:white;
+    border:1px solid #e2e8f0;
 }
 
 .bottom{
     position:fixed;
     bottom:0;
     width:100%;
+    padding:15px;
+    background:white;
+    border-top:1px solid #e2e8f0;
+}
+
+.input-area{
     display:flex;
-    padding:10px;
-    background:#020617;
 }
 
 input{
     flex:1;
-    padding:10px;
-    border:none;
+    padding:12px;
+    border:1px solid #e2e8f0;
     outline:none;
-    border-radius:8px;
+    border-radius:10px;
 }
 
 button{
     margin-left:10px;
-    padding:10px 15px;
+    padding:12px 16px;
     border:none;
-    border-radius:8px;
+    border-radius:10px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+.send-btn{
     background:#22c55e;
     color:white;
-    font-weight:bold;
+}
+
+.create-btn{
+    background:#f59e0b;
+    color:white;
+    margin-top:10px;
+    width:100%;
+}
+
+.full-btn{
+    background:#6366f1;
+    color:white;
+    margin-top:10px;
+    width:100%;
 }
 </style>
 
@@ -70,34 +95,32 @@ button{
 
 <body>
 
-<h2>🤖 Mantu AI Chat</h2>
+<h2>🤖 Mantu AI (Premium)</h2>
 
 <div id="chat"></div>
 
 <div class="bottom">
-    <input id="prompt" placeholder="Type message..."/>
-    <button onclick="send()">Send</button>
+
+    <div class="input-area">
+        <input id="prompt" placeholder="Type message or project name..."/>
+        <button class="send-btn" onclick="send()">Send</button>
+    </div>
+
+    <button class="create-btn" onclick="createProject()">🚀 Create Project</button>
+    <button class="full-btn" onclick="fullBuild()">🔥 Full Build (GitHub)</button>
+
 </div>
 
 <script>
 
+// 🔥 CHAT WITH HISTORY
 async function send(){
     let input = document.getElementById("prompt");
     let text = input.value;
 
     if(!text) return;
 
-    let chat = document.getElementById("chat");
-
-    // user message
-    chat.innerHTML += `<div class="msg user">You: ${text}</div>`;
-
-    input.value = "";
-
-    // scroll down
-    chat.scrollTop = chat.scrollHeight;
-
-    let res = await fetch("/generate",{
+    let res = await fetch("/chat",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({text})
@@ -105,13 +128,72 @@ async function send(){
 
     let data = await res.json();
 
-    // AI message
-    chat.innerHTML += `<div class="msg ai">AI: ${data.response}</div>`;
+    let chat = document.getElementById("chat");
+    chat.innerHTML = "";
+
+    data.history.forEach(msg=>{
+        if(msg.user){
+            chat.innerHTML += `<div class="msg user">You: ${msg.user}</div>`;
+        }
+        if(msg.ai){
+            chat.innerHTML += `<div class="msg ai">AI: ${msg.ai}</div>`;
+        }
+    });
 
     chat.scrollTop = chat.scrollHeight;
+
+    input.value = "";
 }
 
-// Enter press support
+
+// 🚀 CREATE PROJECT
+async function createProject(){
+    let input = document.getElementById("prompt");
+    let text = input.value;
+
+    if(!text){
+        alert("⚠️ Enter project name first");
+        return;
+    }
+
+    let res = await fetch("/create-project",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({text})
+    });
+
+    let data = await res.json();
+    alert(data.msg);
+
+    input.value = "";
+}
+
+
+// 🔥 FULL BUILD
+async function fullBuild(){
+    let input = document.getElementById("prompt");
+    let text = input.value;
+
+    if(!text){
+        alert("⚠️ Enter project name first");
+        return;
+    }
+
+    let res = await fetch("/full-build",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({text})
+    });
+
+    let data = await res.json();
+
+    alert("🚀 Repo Created:\n" + data.repo);
+
+    input.value = "";
+}
+
+
+// ⌨️ ENTER SUPPORT
 document.getElementById("prompt").addEventListener("keypress", function(e){
     if(e.key === "Enter"){
         send();
