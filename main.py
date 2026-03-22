@@ -1,11 +1,10 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, FileResponse
 from pydantic import BaseModel
 import requests
 import os
 import shutil
 from dotenv import load_dotenv
-from fastapi import Request
 
 # =========================
 # 🔐 ENV LOAD
@@ -28,16 +27,15 @@ class Prompt(BaseModel):
 # 🧠 MEMORY
 # =========================
 chat_history = []
-projects = []
 deploy_logs = []
 
 # =========================
 # 🎨 TEMPLATE SYSTEM
 # =========================
 templates = {
-    "blog": "<h1>📝 Blog App</h1><p>Start writing posts</p>",
-    "todo": "<h1>✅ Todo App</h1><p>Manage tasks easily</p>",
-    "ai": "<h1>🤖 AI App</h1><p>Build AI tools</p>"
+    "blog": "<h1>📝 Blog App</h1>",
+    "todo": "<h1>✅ Todo App</h1>",
+    "ai": "<h1>🤖 AI App</h1>"
 }
 
 # =========================
@@ -51,16 +49,16 @@ def landing():
 def app_page():
     return open("index.html").read()
 
-@app.get("/start.html", response_class=HTMLResponse)
-def start_page():
-    return open("start.html").read()
-
-@app.get("/builder.html", response_class=HTMLResponse)
+@app.get("/builder", response_class=HTMLResponse)
 def builder():
     return open("builder.html").read()
 
+@app.get("/start.html", response_class=HTMLResponse)
+def start_page():
+    return open("start.html").read
+
 # =========================
-# 🧠 CREATE PROJECT FUNCTION
+# 🧠 CREATE PROJECT
 # =========================
 def create_project(name):
     os.makedirs(name, exist_ok=True)
@@ -81,10 +79,33 @@ def home():
     return f"✅ Project '{name}' created"
 
 # =========================
-# 🤖 AI CHAT (GROQ)
+# 🌍 RENDER URL
+# =========================
+def get_render_url(project):
+    return f"https://{project}.onrender.com"
+
+# =========================
+# 🚀 GITHUB FUNCTIONS
+# =========================
+def create_github_repo(name):
+    url = "https://api.github.com/user/repos"
+    headers = {"Authorization": f"token {GITHUB_TOKEN}"}
+    data = {"name": name}
+    requests.post(url, headers=headers, json=data)
+
+def push_code(project):
+    os.system(f"cd {project} && git init")
+    os.system(f"cd {project} && git add .")
+    os.system(f"cd {project} && git commit -m 'init'")
+    os.system(f"cd {project} && git branch -M main")
+    os.system(f"cd {project} && git remote add origin https://{GITHUB_TOKEN}@github.com/{GITHUB_USERNAME}/{project}.git")
+    os.system(f"cd {project} && git push -u origin main")
+
+# =========================
+# 🤖 AI GENERATE (GROQ)
 # =========================
 @app.post("/generate")
-def generate(prompt: Prompt):
+async def generate(prompt: Prompt):
     try:
         url = "https://api.groq.com/openai/v1/chat/completions"
 
@@ -119,26 +140,39 @@ def generate(prompt: Prompt):
         return {"response": str(e)}
 
 # =========================
-# 🤖 SMART AGENT CHAT
+# 🤖 SMART CHAT (FINAL 🔥)
 # =========================
 @app.post("/chat")
-def chat(prompt: Prompt):
+async def chat(prompt: Prompt):
     text = prompt.text.lower()
 
-    # 🔥 AUTO PROJECT BUILD
     if "app" in text:
-        name = text.replace(" ", "-")
-        result = create_project(name)
-        ai_response = f"🚀 Code Agent: {result}"
+        project_name = text.replace(" ", "-")
+
+        # 1. create project
+        create_project(project_name)
+
+        # 2. create repo
+        create_github_repo(project_name)
+
+        # 3. push code
+        push_code(project_name)
+
+        # 4. expected live url
+        live_url = get_render_url(project_name)
+
+        ai_response = f"""
+🚀 Project Created & Deploy Started!
+
+📦 Repo:
+https://github.com/{GITHUB_USERNAME}/{project_name}
+
+🌐 Live URL (after deploy):
+{live_url}
+"""
 
     elif "deploy" in text:
-        ai_response = "☁️ Deploy Agent: Deployment starting..."
-
-    elif "error" in text:
-        ai_response = "🛠 Fix Agent: Fixing error..."
-
-    elif "money" in text or "earn" in text:
-        ai_response = "💰 Business Agent: Monetization system added..."
+        ai_response = "☁️ Deploy Agent starting..."
 
     else:
         ai_response = "🤖 AI: Processing..."
@@ -152,15 +186,6 @@ def chat(prompt: Prompt):
     }
 
 # =========================
-# 🚀 CREATE PROJECT (API)
-# =========================
-@app.post("/create-project")
-def create_project_api(prompt: Prompt):
-    name = prompt.text.strip().replace(" ", "-")
-    msg = create_project(name)
-    return {"msg": msg}
-
-# =========================
 # 📦 DOWNLOAD ZIP
 # =========================
 @app.get("/download/{name}")
@@ -169,75 +194,37 @@ def download(name: str):
     return FileResponse(zip_file, filename=f"{name}.zip")
 
 # =========================
-# 🚀 FULL BUILD (GITHUB PUSH)
-# =========================
-@app.post("/full-build")
-def full_build(prompt: Prompt):
-    name = prompt.text.strip().replace(" ", "-")
-
-    create_project(name)
-
-    # create repo
-    requests.post(
-        "https://api.github.com/user/repos",
-        headers={"Authorization": f"token {GITHUB_TOKEN}"},
-        json={"name": name}
-    )
-
-    # push
-    os.system(f"cd {name} && git init")
-    os.system(f"cd {name} && git add .")
-    os.system(f"cd {name} && git commit -m 'init'")
-    os.system(f"cd {name} && git branch -M main")
-    os.system(f"cd {name} && git remote add origin https://{GITHUB_TOKEN}@github.com/{GITHUB_USERNAME}/{name}.git")
-    os.system(f"cd {name} && git push -u origin main")
-
-    return {"msg": "🚀 Pushed to GitHub", "repo": f"https://github.com/{GITHUB_USERNAME}/{name}"}
-
-# =========================
 # 🌐 AUTO DEPLOY
 # =========================
 @app.post("/auto-deploy")
-def auto_deploy(prompt: Prompt):
+async def auto_deploy(prompt: Prompt):
     name = prompt.text.strip().replace(" ", "-")
 
     create_project(name)
 
+    url = get_render_url(name)
+
     deploy_logs.append({
         "project": name,
-        "status": "deploying..."
+        "status": "deploying",
+        "url": url
     })
 
-    return {"msg": "🚀 Deploy Started", "project": name}
+    return {
+        "msg": "🚀 Deploy started",
+        "url": url
+    }
 
 # =========================
-# 🧱 FULL PROJECT GENERATOR
+# 📊 DEPLOY LOGS
 # =========================
-@app.post("/generate-full-project")
-def generate_full_project(prompt: Prompt):
-    name = prompt.text.strip().replace(" ", "-")
-
-    os.makedirs(f"{name}/backend", exist_ok=True)
-    os.makedirs(f"{name}/frontend", exist_ok=True)
-
-    with open(f"{name}/backend/main.py", "w") as f:
-        f.write("print('Backend Ready')")
-
-    with open(f"{name}/frontend/index.html", "w") as f:
-        f.write(f"<h1>{name} Frontend 🚀</h1>")
-
-    return {"msg": "🔥 Full Project Generated", "project": name}
+@app.get("/deploy-logs")
+def logs():
+    return {"logs": deploy_logs}
 
 # =========================
 # 🎨 TEMPLATE API
 # =========================
 @app.post("/template")
-def template_api(prompt: Prompt):
+async def template_api(prompt: Prompt):
     return {"html": templates.get(prompt.text.lower(), "<h1>Custom App</h1>")}
-
-# =========================
-# 📊 DEPLOY TRACKING
-# =========================
-@app.get("/deploy-logs")
-def logs():
-    return {"logs": deploy_logs}
