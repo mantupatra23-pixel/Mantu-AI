@@ -8,70 +8,112 @@
 body{
     margin:0;
     font-family:sans-serif;
-    background:#f8fafc;
+    background:#0f172a;
+    color:white;
 }
 
-/* HEADER */
-.header{
-    padding:15px;
-    background:white;
-    border-bottom:1px solid #e2e8f0;
+/* TOP BAR */
+.topbar{
     display:flex;
     justify-content:space-between;
+    align-items:center;
+    padding:12px 20px;
+    background:#020617;
+    border-bottom:1px solid #1e293b;
+}
+
+.logo{
+    font-weight:bold;
+    color:#22c55e;
+}
+
+.tabs{
+    display:flex;
+    gap:12px;
+    font-size:13px;
+}
+
+.tabs div{
+    cursor:pointer;
+    color:#94a3b8;
+}
+
+.tabs div:hover{
+    color:white;
+}
+
+.publish{
+    background:#22c55e;
+    border:none;
+    padding:8px 12px;
+    border-radius:6px;
+    cursor:pointer;
 }
 
 /* MAIN */
 .main{
-    padding:20px;
-}
-
-/* IDEA */
-.idea{
-    padding:15px;
-    background:white;
-    border-radius:10px;
-    border:1px solid #e2e8f0;
-}
-
-/* BUTTON LINE */
-.actions{
-    margin-top:15px;
     display:flex;
-    gap:10px;
-    flex-wrap:wrap;
+    height:85vh;
 }
 
-.actions button{
-    padding:12px;
-    border:none;
-    border-radius:8px;
-    color:white;
-    cursor:pointer;
-}
-
-.create{background:#f59e0b;}
-.deploy{background:#10b981;}
-.generate{background:#3b82f6;}
-.full{background:#6366f1;}
-.template{background:#ec4899;}
-.track{background:#06b6d4;}
-
-/* OUTPUT */
-.output{
-    margin-top:20px;
-    background:#111827;
-    color:#22c55e;
+/* LEFT PANEL */
+.left{
+    width:30%;
     padding:15px;
-    border-radius:10px;
+    background:#020617;
+    border-right:1px solid #1e293b;
+    overflow:auto;
+}
+
+/* RIGHT PANEL */
+.right{
+    flex:1;
+    padding:15px;
 }
 
 /* PREVIEW */
-iframe{
-    width:100%;
-    height:300px;
-    border:none;
-    margin-top:15px;
+.preview{
+    background:#020617;
     border-radius:10px;
+    padding:10px;
+    height:60%;
+    margin-bottom:10px;
+}
+
+/* CODE */
+.code{
+    background:black;
+    color:#22c55e;
+    padding:10px;
+    border-radius:10px;
+    height:35%;
+    overflow:auto;
+}
+
+/* CHAT */
+.chat{
+    position:fixed;
+    bottom:0;
+    width:100%;
+    background:#020617;
+    padding:10px;
+    display:flex;
+    gap:10px;
+}
+
+.chat input{
+    flex:1;
+    padding:10px;
+    border-radius:8px;
+    border:none;
+}
+
+.chat button{
+    background:#22c55e;
+    border:none;
+    padding:10px;
+    border-radius:8px;
+    cursor:pointer;
 }
 
 </style>
@@ -79,114 +121,97 @@ iframe{
 
 <body>
 
-<div class="header">
-    <div>⚡ Builder</div>
-    <button onclick="goHome()">← Back</button>
-</div>
+<!-- TOP -->
+<div class="topbar">
 
-<div class="main">
+    <div class="logo">⚡ Mantu AI</div>
 
-    <!-- IDEA -->
-    <div class="idea" id="ideaBox"></div>
-
-    <!-- BUTTONS -->
-    <div class="actions">
-        <button class="create" onclick="create()">Create</button>
-        <button class="generate" onclick="generate()">Generate</button>
-        <button class="full" onclick="full()">Full</button>
-        <button class="deploy" onclick="deploy()">Deploy</button>
-        <button class="template" onclick="template()">Template</button>
-        <button class="track" onclick="track()">Track</button>
+    <div class="tabs">
+        <div id="project">Project</div>
+        <div>Sandbox</div>
+        <div>Environment</div>
+        <div>Config</div>
+        <div>Users</div>
+        <div>Database</div>
+        <div>Monitoring</div>
+        <div>Logs</div>
+        <div>Email</div>
+        <div>Files</div>
     </div>
 
-    <div class="output" id="output">⚡ Ready...</div>
+    <button class="publish" onclick="publish()">Publish</button>
 
-    <iframe id="frame"></iframe>
+</div>
 
+<!-- MAIN -->
+<div class="main">
+
+    <!-- LEFT -->
+    <div class="left">
+        <h3>AI Output</h3>
+        <p id="output">Generating...</p>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="right">
+
+        <div class="preview">
+            <h3>Preview</h3>
+            <iframe src="/" width="100%" height="90%" style="border:none;border-radius:10px;"></iframe>
+        </div>
+
+        <div class="code" id="code">
+# Code will appear here
+        </div>
+
+    </div>
+
+</div>
+
+<!-- CHAT -->
+<div class="chat">
+    <input id="msg" placeholder="Type message...">
+    <button onclick="send()">Send</button>
 </div>
 
 <script>
 
-// Load idea
+// LOAD IDEA
 let idea = localStorage.getItem("idea");
-document.getElementById("ideaBox").innerText = idea;
+document.getElementById("project").innerText = idea || "AI Project";
 
-// CREATE
-function create(){
-    fetch("/create-project",{
+// AUTO GENERATE
+fetch("/generate",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({idea: idea})
+})
+.then(res=>res.json())
+.then(data=>{
+    document.getElementById("output").innerText = data.result;
+    document.getElementById("code").innerText = data.code;
+});
+
+// CHAT
+function send(){
+    let msg = document.getElementById("msg").value;
+
+    fetch("/chat",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({text:idea})
+        body: JSON.stringify({message: msg})
     })
     .then(res=>res.json())
     .then(data=>{
-        document.getElementById("output").innerText = data.msg;
+        document.getElementById("output").innerText += "\n\nAI: " + data.reply;
     });
+
+    document.getElementById("msg").value="";
 }
 
-// GENERATE
-function generate(){
-    fetch("/generate",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({text:idea})
-    })
-    .then(res=>res.json())
-    .then(data=>{
-        document.getElementById("output").innerText = data.response;
-    });
-}
-
-// FULL BUILD
-function full(){
-    fetch("/full-build",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({text:idea})
-    })
-    .then(res=>res.json())
-    .then(data=>{
-        document.getElementById("output").innerText = data.repo;
-    });
-}
-
-// DEPLOY
-function deploy(){
-    fetch("/auto-deploy",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({text:idea})
-    })
-    .then(res=>res.json())
-    .then(data=>{
-        document.getElementById("output").innerText = data.msg;
-    });
-}
-
-// TEMPLATE
-function template(){
-    fetch("/template",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({text:idea})
-    })
-    .then(res=>res.json())
-    .then(data=>{
-        document.getElementById("output").innerHTML = data.html;
-    });
-}
-
-// TRACK
-function track(){
-    fetch("/deploy-logs")
-    .then(res=>res.json())
-    .then(data=>{
-        document.getElementById("output").innerText = JSON.stringify(data.logs);
-    });
-}
-
-function goHome(){
-    window.location.href = "/";
+// PUBLISH
+function publish(){
+    alert("🚀 App Published!");
 }
 
 </script>

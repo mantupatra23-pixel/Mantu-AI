@@ -5,6 +5,7 @@ import requests
 import os
 import shutil
 from dotenv import load_dotenv
+from fastapi import Request
 
 # =========================
 # 🔐 ENV LOAD
