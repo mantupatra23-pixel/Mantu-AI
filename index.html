@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Mantu AI - Super UI</title>
+<title>Mantu AI SaaS</title>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -10,144 +10,112 @@
 body{
     margin:0;
     font-family:Arial;
-    background:#020617;
+    background:#0f172a;
     color:white;
 }
 
-/* HEADER */
-.header{
+/* LAYOUT */
+.container{
     display:flex;
-    justify-content:space-between;
+    height:100vh;
+}
+
+/* SIDEBAR */
+.sidebar{
+    width:260px;
+    background:#020617;
     padding:15px;
-    background:rgba(255,255,255,0.05);
-    backdrop-filter:blur(15px);
-    border-bottom:1px solid rgba(255,255,255,0.1);
+    border-right:1px solid #1e293b;
 }
 
 .logo{
-    font-weight:bold;
     font-size:18px;
+    font-weight:bold;
+    margin-bottom:20px;
     color:#22c55e;
 }
 
-/* CHAT */
-#chat{
-    height:60vh;
-    overflow:auto;
-    padding:15px;
+.nav{
+    padding:10px;
+    margin:5px 0;
+    border-radius:8px;
+    cursor:pointer;
+    background:#0f172a;
 }
 
-/* MESSAGE */
-.msg{
-    padding:12px;
-    margin:10px;
-    border-radius:12px;
-    max-width:80%;
-    animation:fade 0.3s ease;
+.nav:hover{
+    background:#1e293b;
 }
 
-.user{
-    background:#22c55e;
-    margin-left:auto;
-}
-
-.ai{
-    background:rgba(255,255,255,0.08);
-    backdrop-filter:blur(10px);
-    border:1px solid rgba(255,255,255,0.1);
-}
-
-/* INPUT */
-.bottom{
-    position:fixed;
-    bottom:0;
-    width:100%;
-    padding:15px;
-    background:rgba(0,0,0,0.7);
-    backdrop-filter:blur(15px);
-}
-
-.input-area{
-    display:flex;
-}
-
-input{
+/* MAIN */
+.main{
     flex:1;
-    padding:12px;
+    display:flex;
+    flex-direction:column;
+}
+
+/* TOP BAR */
+.topbar{
+    padding:15px;
+    border-bottom:1px solid #1e293b;
+    display:flex;
+    justify-content:space-between;
+}
+
+.btn{
+    padding:8px 12px;
     border:none;
-    border-radius:10px;
-    outline:none;
-    background:#111;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+.publish{
+    background:#22c55e;
     color:white;
 }
 
-/* BUTTONS */
-.actions{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:10px;
-    margin-top:10px;
+/* WORK AREA */
+.workspace{
+    flex:1;
+    padding:20px;
+    overflow:auto;
 }
 
-button{
+/* HERO BOX */
+.hero{
+    background:#020617;
+    padding:30px;
+    border-radius:12px;
+    text-align:center;
+}
+
+.hero h1{
+    font-size:28px;
+}
+
+/* ACTION BOX */
+.actions{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:10px;
+    margin-top:20px;
+}
+
+.actions button{
     padding:12px;
     border:none;
     border-radius:10px;
     font-weight:bold;
     cursor:pointer;
-    transition:0.2s;
-}
-
-/* GLOW EFFECT */
-button:hover{
-    transform:scale(1.05);
-    box-shadow:0 0 10px #22c55e;
 }
 
 /* COLORS */
-.send{background:#22c55e;color:white;}
 .create{background:#f59e0b;}
-.full{background:#6366f1;}
 .deploy{background:#10b981;}
-.gen{background:#3b82f6;}
-.temp{background:#ec4899;}
+.generate{background:#3b82f6;}
+.full{background:#6366f1;}
+.template{background:#ec4899;}
 .track{background:#06b6d4;}
-
-/* LOADER */
-.loader{
-    width:20px;
-    height:20px;
-    border:3px solid #444;
-    border-top:3px solid #22c55e;
-    border-radius:50%;
-    animation:spin 1s linear infinite;
-}
-
-@keyframes spin{
-    to{transform:rotate(360deg);}
-}
-
-/* TYPING EFFECT */
-.typing{
-    border-right:2px solid white;
-    white-space:nowrap;
-    overflow:hidden;
-    animation:typing 2s steps(30,end), blink .7s infinite;
-}
-
-@keyframes typing{
-    from{width:0;}
-    to{width:100%;}
-}
-
-@keyframes blink{
-    50%{border-color:transparent;}
-}
-
-@keyframes fade{
-    from{opacity:0;transform:translateY(10px);}
-    to{opacity:1;}
-}
 
 </style>
 
@@ -155,70 +123,56 @@ button:hover{
 
 <body>
 
-<div class="header">
+<div class="container">
+
+<!-- SIDEBAR -->
+<div class="sidebar">
     <div class="logo">⚡ Mantu AI</div>
+
+    <div class="nav">📊 Dashboard</div>
+    <div class="nav">🚀 Projects</div>
+    <div class="nav">💰 Billing</div>
+    <div class="nav">⚙️ Settings</div>
 </div>
 
-<div id="chat"></div>
+<!-- MAIN -->
+<div class="main">
 
-<div class="bottom">
-
-<div class="input-area">
-    <input id="prompt" placeholder="Type idea... (build app / earn money)">
-    <button class="send" onclick="send()">Send</button>
+<div class="topbar">
+    <div>AI SaaS Builder</div>
+    <button class="btn publish">Publish</button>
 </div>
 
+<div class="workspace">
+
+<div class="hero">
+    <h1>Build AI Apps in Seconds 🚀</h1>
+    <p>Create, Deploy, Earn with AI</p>
+</div>
+
+<!-- ACTION BUTTONS -->
 <div class="actions">
     <button class="create" onclick="createProject()">Create</button>
-    <button class="full" onclick="fullBuild()">Full</button>
     <button class="deploy" onclick="deploy()">Deploy</button>
-    <button class="gen" onclick="fullProject()">Generate</button>
-    <button class="temp" onclick="template()">Template</button>
+    <button class="generate" onclick="fullProject()">Generate</button>
+    <button class="full" onclick="fullBuild()">Full Build</button>
+    <button class="template" onclick="template()">Template</button>
     <button class="track" onclick="track()">Track</button>
+</div>
+
+<!-- CHAT BOX -->
+<div style="margin-top:20px;">
+    <input id="prompt" placeholder="Type idea..." style="width:100%;padding:12px;border-radius:10px;border:none;">
+</div>
+
+</div>
+
 </div>
 
 </div>
 
 <script>
 
-// 🔥 CHAT WITH LOADER + TYPING
-async function send(){
- let text = document.getElementById("prompt").value;
- let chat = document.getElementById("chat");
-
- // show user
- chat.innerHTML += `<div class="msg user">${text}</div>`;
-
- // loader
- let loader = document.createElement("div");
- loader.className="msg ai";
- loader.innerHTML = `<div class="loader"></div>`;
- chat.appendChild(loader);
-
- chat.scrollTop = chat.scrollHeight;
-
- let res = await fetch("/chat",{
-  method:"POST",
-  headers:{"Content-Type":"application/json"},
-  body:JSON.stringify({text})
- });
-
- let data = await res.json();
-
- // remove loader
- loader.remove();
-
- // typing effect
- let aiDiv = document.createElement("div");
- aiDiv.className="msg ai typing";
- aiDiv.innerText = data.response;
-
- chat.appendChild(aiDiv);
-
- chat.scrollTop = chat.scrollHeight;
-}
-
-// CREATE
 async function createProject(){
  let text = document.getElementById("prompt").value;
  let res = await fetch("/create-project",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text})});
@@ -226,23 +180,13 @@ async function createProject(){
  alert(data.msg);
 }
 
-// FULL
-async function fullBuild(){
- let text = document.getElementById("prompt").value;
- let res = await fetch("/full-build",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text})});
- let data = await res.json();
- alert(data.repo);
-}
-
-// DEPLOY
 async function deploy(){
  let text = document.getElementById("prompt").value;
  let res = await fetch("/auto-deploy",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text})});
  let data = await res.json();
- alert("Deploy 🚀");
+ alert("Deploy started 🚀");
 }
 
-// GENERATE
 async function fullProject(){
  let text = document.getElementById("prompt").value;
  let res = await fetch("/generate-full-project",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text})});
@@ -250,15 +194,20 @@ async function fullProject(){
  alert(data.msg);
 }
 
-// TEMPLATE
+async function fullBuild(){
+ let text = document.getElementById("prompt").value;
+ let res = await fetch("/full-build",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text})});
+ let data = await res.json();
+ alert(data.repo);
+}
+
 async function template(){
  let text = document.getElementById("prompt").value;
  let res = await fetch("/template",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text})});
  let data = await res.json();
- document.getElementById("chat").innerHTML = data.html;
+ alert("Template Loaded");
 }
 
-// TRACK
 async function track(){
  let text = document.getElementById("prompt").value;
  let res = await fetch("/track-deploy",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text})});
