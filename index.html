@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Mantu AI Ultra</title>
+<title>Mantu AI - Super UI</title>
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -9,116 +10,143 @@
 body{
     margin:0;
     font-family:Arial;
-    display:flex;
-    height:100vh;
-    overflow:hidden;
-}
-
-/* SIDEBAR */
-.sidebar{
-    width:220px;
     background:#020617;
     color:white;
-    padding:15px;
 }
 
-.sidebar h2{
-    font-size:18px;
-}
-
-.sidebar button{
-    width:100%;
-    margin:8px 0;
-    padding:10px;
-    border:none;
-    border-radius:8px;
-    background:#1e293b;
-    color:white;
-    cursor:pointer;
-}
-
-/* MAIN */
-.main{
-    flex:1;
-    display:flex;
-    flex-direction:column;
-}
-
-/* TOP BAR */
-.top{
-    padding:10px;
-    background:white;
-    border-bottom:1px solid #ddd;
+/* HEADER */
+.header{
     display:flex;
     justify-content:space-between;
-}
-
-/* BUILDER AREA */
-.builder{
-    flex:1;
-    display:flex;
-}
-
-/* LEFT PANEL */
-.left{
-    width:40%;
     padding:15px;
-    background:#f8fafc;
+    background:rgba(255,255,255,0.05);
+    backdrop-filter:blur(15px);
+    border-bottom:1px solid rgba(255,255,255,0.1);
+}
+
+.logo{
+    font-weight:bold;
+    font-size:18px;
+    color:#22c55e;
+}
+
+/* CHAT */
+#chat{
+    height:60vh;
     overflow:auto;
+    padding:15px;
 }
 
-/* RIGHT PANEL (LIVE PREVIEW) */
-.right{
-    width:60%;
-    border-left:1px solid #ddd;
+/* MESSAGE */
+.msg{
+    padding:12px;
+    margin:10px;
+    border-radius:12px;
+    max-width:80%;
+    animation:fade 0.3s ease;
 }
 
-iframe{
-    width:100%;
-    height:100%;
-    border:none;
+.user{
+    background:#22c55e;
+    margin-left:auto;
+}
+
+.ai{
+    background:rgba(255,255,255,0.08);
+    backdrop-filter:blur(10px);
+    border:1px solid rgba(255,255,255,0.1);
 }
 
 /* INPUT */
-.input-box{
+.bottom{
+    position:fixed;
+    bottom:0;
+    width:100%;
+    padding:15px;
+    background:rgba(0,0,0,0.7);
+    backdrop-filter:blur(15px);
+}
+
+.input-area{
     display:flex;
 }
 
 input{
     flex:1;
     padding:12px;
-    border-radius:8px;
-    border:1px solid #ddd;
-}
-
-button{
-    margin-left:10px;
-    padding:12px;
     border:none;
-    border-radius:8px;
-    background:#22c55e;
+    border-radius:10px;
+    outline:none;
+    background:#111;
     color:white;
 }
 
-/* CHAT */
-.chat{
-    margin-top:15px;
-    background:white;
-    padding:10px;
-    border-radius:10px;
-    height:150px;
-    overflow:auto;
+/* BUTTONS */
+.actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-top:10px;
 }
 
-/* CODE */
-.code{
-    margin-top:15px;
-    background:#0f172a;
-    color:#22c55e;
-    padding:10px;
+button{
+    padding:12px;
+    border:none;
     border-radius:10px;
-    height:150px;
-    overflow:auto;
+    font-weight:bold;
+    cursor:pointer;
+    transition:0.2s;
+}
+
+/* GLOW EFFECT */
+button:hover{
+    transform:scale(1.05);
+    box-shadow:0 0 10px #22c55e;
+}
+
+/* COLORS */
+.send{background:#22c55e;color:white;}
+.create{background:#f59e0b;}
+.full{background:#6366f1;}
+.deploy{background:#10b981;}
+.gen{background:#3b82f6;}
+.temp{background:#ec4899;}
+.track{background:#06b6d4;}
+
+/* LOADER */
+.loader{
+    width:20px;
+    height:20px;
+    border:3px solid #444;
+    border-top:3px solid #22c55e;
+    border-radius:50%;
+    animation:spin 1s linear infinite;
+}
+
+@keyframes spin{
+    to{transform:rotate(360deg);}
+}
+
+/* TYPING EFFECT */
+.typing{
+    border-right:2px solid white;
+    white-space:nowrap;
+    overflow:hidden;
+    animation:typing 2s steps(30,end), blink .7s infinite;
+}
+
+@keyframes typing{
+    from{width:0;}
+    to{width:100%;}
+}
+
+@keyframes blink{
+    50%{border-color:transparent;}
+}
+
+@keyframes fade{
+    from{opacity:0;transform:translateY(10px);}
+    to{opacity:1;}
 }
 
 </style>
@@ -127,58 +155,47 @@ button{
 
 <body>
 
-<!-- SIDEBAR -->
-<div class="sidebar">
-    <h2>⚡ Mantu AI</h2>
-
-    <button onclick="send()">💬 Chat</button>
-    <button onclick="createProject()">🚀 Create</button>
-    <button onclick="fullBuild()">🔥 Build</button>
-    <button onclick="deploy()">🌐 Deploy</button>
-    <button onclick="fullProject()">📦 Full App</button>
-    <button onclick="template()">🎨 Template</button>
+<div class="header">
+    <div class="logo">⚡ Mantu AI</div>
 </div>
 
-<!-- MAIN -->
-<div class="main">
+<div id="chat"></div>
 
-<div class="top">
-    <b>AI Builder</b>
-    <button onclick="goHome()">Home</button>
+<div class="bottom">
+
+<div class="input-area">
+    <input id="prompt" placeholder="Type idea... (build app / earn money)">
+    <button class="send" onclick="send()">Send</button>
 </div>
 
-<div class="builder">
-
-<!-- LEFT -->
-<div class="left">
-
-<div class="input-box">
-    <input id="prompt" placeholder="Type your idea (AI app, blog...)">
-    <button onclick="send()">Generate</button>
-</div>
-
-<div class="chat" id="chat"></div>
-
-<div class="code" id="code">
-# Output code / logs here...
-</div>
-
-</div>
-
-<!-- RIGHT (LIVE PREVIEW) -->
-<div class="right">
-    <iframe id="preview"></iframe>
-</div>
-
+<div class="actions">
+    <button class="create" onclick="createProject()">Create</button>
+    <button class="full" onclick="fullBuild()">Full</button>
+    <button class="deploy" onclick="deploy()">Deploy</button>
+    <button class="gen" onclick="fullProject()">Generate</button>
+    <button class="temp" onclick="template()">Template</button>
+    <button class="track" onclick="track()">Track</button>
 </div>
 
 </div>
 
 <script>
 
-// CHAT
+// 🔥 CHAT WITH LOADER + TYPING
 async function send(){
  let text = document.getElementById("prompt").value;
+ let chat = document.getElementById("chat");
+
+ // show user
+ chat.innerHTML += `<div class="msg user">${text}</div>`;
+
+ // loader
+ let loader = document.createElement("div");
+ loader.className="msg ai";
+ loader.innerHTML = `<div class="loader"></div>`;
+ chat.appendChild(loader);
+
+ chat.scrollTop = chat.scrollHeight;
 
  let res = await fetch("/chat",{
   method:"POST",
@@ -188,102 +205,65 @@ async function send(){
 
  let data = await res.json();
 
- let chat = document.getElementById("chat");
- chat.innerHTML = "";
+ // remove loader
+ loader.remove();
 
- data.history.forEach(msg=>{
-  if(msg.user){
-   chat.innerHTML += `<div>You: ${msg.user}</div>`;
-  }
-  if(msg.ai){
-   chat.innerHTML += `<div style="color:green">AI: ${msg.ai}</div>`;
-  }
- });
+ // typing effect
+ let aiDiv = document.createElement("div");
+ aiDiv.className="msg ai typing";
+ aiDiv.innerText = data.response;
+
+ chat.appendChild(aiDiv);
+
+ chat.scrollTop = chat.scrollHeight;
 }
 
-// CREATE PROJECT
+// CREATE
 async function createProject(){
  let text = document.getElementById("prompt").value;
-
- let res = await fetch("/create-project",{
-  method:"POST",
-  headers:{"Content-Type":"application/json"},
-  body:JSON.stringify({text})
- });
-
+ let res = await fetch("/create-project",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text})});
  let data = await res.json();
-
- document.getElementById("code").innerText = data.msg;
-
- // LIVE PREVIEW
- document.getElementById("preview").src = "/landing";
+ alert(data.msg);
 }
 
-// FULL BUILD
+// FULL
 async function fullBuild(){
  let text = document.getElementById("prompt").value;
-
- let res = await fetch("/full-build",{
-  method:"POST",
-  headers:{"Content-Type":"application/json"},
-  body:JSON.stringify({text})
- });
-
+ let res = await fetch("/full-build",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text})});
  let data = await res.json();
-
- document.getElementById("code").innerText = data.repo;
+ alert(data.repo);
 }
 
 // DEPLOY
 async function deploy(){
  let text = document.getElementById("prompt").value;
-
- let res = await fetch("/auto-deploy",{
-  method:"POST",
-  headers:{"Content-Type":"application/json"},
-  body:JSON.stringify({text})
- });
-
+ let res = await fetch("/auto-deploy",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text})});
  let data = await res.json();
-
- document.getElementById("code").innerText = data.repo;
+ alert("Deploy 🚀");
 }
 
-// FULL APP
+// GENERATE
 async function fullProject(){
  let text = document.getElementById("prompt").value;
-
- let res = await fetch("/generate-full-project",{
-  method:"POST",
-  headers:{"Content-Type":"application/json"},
-  body:JSON.stringify({text})
- });
-
+ let res = await fetch("/generate-full-project",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text})});
  let data = await res.json();
-
- document.getElementById("code").innerText = data.msg;
-
- document.getElementById("preview").src = "/landing";
+ alert(data.msg);
 }
 
 // TEMPLATE
 async function template(){
  let text = document.getElementById("prompt").value;
-
- let res = await fetch("/template",{
-  method:"POST",
-  headers:{"Content-Type":"application/json"},
-  body:JSON.stringify({text})
- });
-
+ let res = await fetch("/template",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text})});
  let data = await res.json();
-
- document.getElementById("preview").srcdoc = data.html;
+ document.getElementById("chat").innerHTML = data.html;
 }
 
-// NAV
-function goHome(){
- window.location.href="/landing";
+// TRACK
+async function track(){
+ let text = document.getElementById("prompt").value;
+ let res = await fetch("/track-deploy",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text})});
+ let data = await res.json();
+ alert(JSON.stringify(data.logs));
 }
 
 </script>

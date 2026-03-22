@@ -40,23 +40,6 @@ templates = {
 }
 
 # =========================
-# 🤖 AGENT ROUTER (SMART AI)
-# =========================
-def agent_router(text):
-    text = text.lower()
-
-    if "app" in text:
-        return "🚀 Code Agent: Building your app..."
-    elif "deploy" in text:
-        return "☁️ Deploy Agent: Deploying your project..."
-    elif "error" in text:
-        return "🛠 Fix Agent: Fixing errors..."
-    elif "money" in text or "earn" in text:
-        return "💰 Business Agent: Adding earning system..."
-    else:
-        return "🤖 AI: Processing..."
-
-# =========================
 # 🌐 FRONTEND ROUTES
 # =========================
 @app.get("/", response_class=HTMLResponse)
@@ -67,13 +50,33 @@ def landing():
 def app_page():
     return open("index.html").read()
 
-@app.get("/", response_class=HTMLResponse)
-def entry():
+@app.get("/start.html", response_class=HTMLResponse)
+def start_page():
     return open("start.html").read()
 
+# =========================
+# 🧠 CREATE PROJECT FUNCTION
+# =========================
+def create_project(name):
+    os.makedirs(name, exist_ok=True)
+
+    with open(f"{name}/main.py", "w") as f:
+        f.write("""
+from fastapi import FastAPI
+app = FastAPI()
+
+@app.get("/")
+def home():
+    return {"msg":"Hello from Mantu AI 🚀"}
+""")
+
+    with open(f"{name}/index.html", "w") as f:
+        f.write(f"<h1>{name} App 🚀</h1>")
+
+    return f"✅ Project '{name}' created"
 
 # =========================
-# 🤖 AI CHAT (GROQ + MEMORY)
+# 🤖 AI CHAT (GROQ)
 # =========================
 @app.post("/generate")
 def generate(prompt: Prompt):
@@ -108,18 +111,34 @@ def generate(prompt: Prompt):
         return {"response": reply}
 
     except Exception as e:
-        return {"response": f"Error: {str(e)}"}
+        return {"response": str(e)}
 
 # =========================
-# 💬 SMART CHAT (AGENT + MEMORY)
+# 🤖 SMART AGENT CHAT
 # =========================
 @app.post("/chat")
 def chat(prompt: Prompt):
-    user_msg = prompt.text
+    text = prompt.text.lower()
 
-    ai_response = agent_router(user_msg)
+    # 🔥 AUTO PROJECT BUILD
+    if "app" in text:
+        name = text.replace(" ", "-")
+        result = create_project(name)
+        ai_response = f"🚀 Code Agent: {result}"
 
-    chat_history.append({"user": user_msg})
+    elif "deploy" in text:
+        ai_response = "☁️ Deploy Agent: Deployment starting..."
+
+    elif "error" in text:
+        ai_response = "🛠 Fix Agent: Fixing error..."
+
+    elif "money" in text or "earn" in text:
+        ai_response = "💰 Business Agent: Monetization system added..."
+
+    else:
+        ai_response = "🤖 AI: Processing..."
+
+    chat_history.append({"user": prompt.text})
     chat_history.append({"ai": ai_response})
 
     return {
@@ -128,174 +147,92 @@ def chat(prompt: Prompt):
     }
 
 # =========================
-# 🚀 CREATE PROJECT
+# 🚀 CREATE PROJECT (API)
 # =========================
 @app.post("/create-project")
-def create_project(prompt: Prompt):
-    try:
-        project = prompt.text.strip().replace(" ", "-")
-        os.makedirs(project, exist_ok=True)
-
-        with open(f"{project}/app.py", "w") as f:
-            f.write(f"""from fastapi import FastAPI
-app = FastAPI()
-
-@app.get("/")
-def home():
-    return {{"msg": "Welcome to {prompt.text}"}}
-""")
-
-        with open(f"{project}/index.html", "w") as f:
-            f.write(f"<h1>{prompt.text}</h1><p>Ready 🚀</p>")
-
-        push_to_git(project)
-
-        return {"msg": f"✅ {project} created"}
-
-    except Exception as e:
-        return {"msg": f"❌ {str(e)}"}
-
-# =========================
-# 💾 SAVE PROJECT
-# =========================
-@app.post("/save-project")
-def save_project(prompt: Prompt):
-    projects.append(prompt.text)
-    return {"projects": projects}
+def create_project_api(prompt: Prompt):
+    name = prompt.text.strip().replace(" ", "-")
+    msg = create_project(name)
+    return {"msg": msg}
 
 # =========================
 # 📦 DOWNLOAD ZIP
 # =========================
 @app.get("/download/{name}")
 def download(name: str):
-    try:
-        zip_file = shutil.make_archive(name, 'zip', name)
-        return FileResponse(zip_file, filename=f"{name}.zip")
-    except Exception as e:
-        return {"msg": f"❌ {str(e)}"}
-
-# =========================
-# 🔧 LOCAL GIT
-# =========================
-def push_to_git(project):
-    try:
-        os.system(f"cd {project} && git init")
-        os.system(f"cd {project} && git add .")
-        os.system(f"cd {project} && git commit -m 'init'")
-    except:
-        pass
+    zip_file = shutil.make_archive(name, 'zip', name)
+    return FileResponse(zip_file, filename=f"{name}.zip")
 
 # =========================
 # 🚀 FULL BUILD (GITHUB PUSH)
 # =========================
 @app.post("/full-build")
 def full_build(prompt: Prompt):
-    try:
-        project = prompt.text.strip().replace(" ", "-")
-        os.makedirs(project, exist_ok=True)
+    name = prompt.text.strip().replace(" ", "-")
 
-        with open(f"{project}/app.py", "w") as f:
-            f.write(f"# AI generated app for {prompt.text}")
+    create_project(name)
 
-        with open(f"{project}/requirements.txt", "w") as f:
-            f.write("fastapi\nuvicorn\n")
+    # create repo
+    requests.post(
+        "https://api.github.com/user/repos",
+        headers={"Authorization": f"token {GITHUB_TOKEN}"},
+        json={"name": name}
+    )
 
-        requests.post(
-            "https://api.github.com/user/repos",
-            headers={"Authorization": f"token {GITHUB_TOKEN}"},
-            json={"name": project}
-        )
+    # push
+    os.system(f"cd {name} && git init")
+    os.system(f"cd {name} && git add .")
+    os.system(f"cd {name} && git commit -m 'init'")
+    os.system(f"cd {name} && git branch -M main")
+    os.system(f"cd {name} && git remote add origin https://{GITHUB_TOKEN}@github.com/{GITHUB_USERNAME}/{name}.git")
+    os.system(f"cd {name} && git push -u origin main")
 
-        os.system(f"cd {project} && git init")
-        os.system(f"cd {project} && git add .")
-        os.system(f"cd {project} && git commit -m 'init'")
-        os.system(f"cd {project} && git branch -M main")
-        os.system(f"cd {project} && git remote add origin https://{GITHUB_TOKEN}@github.com/{GITHUB_USERNAME}/{project}.git")
-        os.system(f"cd {project} && git push -u origin main")
-
-        return {"msg": "🚀 Project Created", "repo": f"https://github.com/{GITHUB_USERNAME}/{project}"}
-
-    except Exception as e:
-        return {"msg": f"❌ {str(e)}"}
+    return {"msg": "🚀 Pushed to GitHub", "repo": f"https://github.com/{GITHUB_USERNAME}/{name}"}
 
 # =========================
 # 🌐 AUTO DEPLOY
 # =========================
 @app.post("/auto-deploy")
 def auto_deploy(prompt: Prompt):
-    try:
-        name = prompt.text.strip().replace(" ", "-")
-        os.makedirs(name, exist_ok=True)
+    name = prompt.text.strip().replace(" ", "-")
 
-        with open(f"{name}/main.py", "w") as f:
-            f.write("print('Hello from Mantu AI')")
+    create_project(name)
 
-        with open(f"{name}/requirements.txt", "w") as f:
-            f.write("fastapi\nuvicorn\n")
+    deploy_logs.append({
+        "project": name,
+        "status": "deploying..."
+    })
 
-        requests.post(
-            "https://api.github.com/user/repos",
-            headers={"Authorization": f"token {GITHUB_TOKEN}"},
-            json={"name": name}
-        )
-
-        os.system(f"cd {name} && git init")
-        os.system(f"cd {name} && git add .")
-        os.system(f"cd {name} && git commit -m 'init'")
-        os.system(f"cd {name} && git branch -M main")
-        os.system(f"cd {name} && git remote add origin https://{GITHUB_TOKEN}@github.com/{GITHUB_USERNAME}/{name}.git")
-        os.system(f"cd {name} && git push -u origin main")
-
-        deploy_logs.append({"project": name, "status": "deploying..."})
-
-        return {"msg": "🚀 Deploy Started", "repo": f"https://github.com/{GITHUB_USERNAME}/{name}"}
-
-    except Exception as e:
-        return {"msg": f"❌ {str(e)}"}
+    return {"msg": "🚀 Deploy Started", "project": name}
 
 # =========================
 # 🧱 FULL PROJECT GENERATOR
 # =========================
 @app.post("/generate-full-project")
 def generate_full_project(prompt: Prompt):
-    try:
-        name = prompt.text.strip().replace(" ", "-")
+    name = prompt.text.strip().replace(" ", "-")
 
-        os.makedirs(f"{name}/backend", exist_ok=True)
-        os.makedirs(f"{name}/frontend", exist_ok=True)
+    os.makedirs(f"{name}/backend", exist_ok=True)
+    os.makedirs(f"{name}/frontend", exist_ok=True)
 
-        with open(f"{name}/backend/main.py", "w") as f:
-            f.write("""from fastapi import FastAPI
-app = FastAPI()
+    with open(f"{name}/backend/main.py", "w") as f:
+        f.write("print('Backend Ready')")
 
-@app.get("/")
-def home():
-    return {"msg":"Hello from backend"}
-""")
+    with open(f"{name}/frontend/index.html", "w") as f:
+        f.write(f"<h1>{name} Frontend 🚀</h1>")
 
-        with open(f"{name}/frontend/index.html", "w") as f:
-            f.write(f"<h1>{prompt.text} App</h1>")
-
-        return {"msg": "🔥 Full Project Generated", "project": name}
-
-    except Exception as e:
-        return {"msg": f"❌ {str(e)}"}
+    return {"msg": "🔥 Full Project Generated", "project": name}
 
 # =========================
 # 🎨 TEMPLATE API
 # =========================
 @app.post("/template")
-def use_template(prompt: Prompt):
+def template_api(prompt: Prompt):
     return {"html": templates.get(prompt.text.lower(), "<h1>Custom App</h1>")}
 
 # =========================
 # 📊 DEPLOY TRACKING
 # =========================
-@app.post("/track-deploy")
-def track(prompt: Prompt):
-    deploy_logs.append({"project": prompt.text, "status": "deploying..."})
-    return {"logs": deploy_logs}
-
 @app.get("/deploy-logs")
 def logs():
     return {"logs": deploy_logs}
