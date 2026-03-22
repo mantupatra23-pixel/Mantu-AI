@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<body>
+<h2>Mantu AI</h2>
+<input id="prompt">
+<button onclick="send()">Send</button>
+<pre id="out"></pre>
+
+<script>
+async function send(){
+ let text=document.getElementById("prompt").value;
+ let res=await fetch("/generate",{
+ method:"POST",
+ headers:{"Content-Type":"application/json"},
+ body:JSON.stringify({text})
+ });
+ let data=await res.json();
+ document.getElementById("out").innerText=data.response;
+}
+</script>
+
+</body>
+</html>
