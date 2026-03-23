@@ -14,7 +14,6 @@ app = FastAPI()
 # =========================
 # 🌐 STATIC PROJECT SERVE (NEW 🔥)
 # =========================
-app.mount("/apps", StaticFiles(directory="projects"), name="apps")
 
 # ✅ test route
 @app.get("/api")
