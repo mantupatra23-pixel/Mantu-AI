@@ -15,6 +15,10 @@ app = FastAPI()
 # =========================
 # 🌐 STATIC PROJECT SERVE (NEW 🔥)
 # =========================
+# 🔥 IMPORTANT FIX
+os.makedirs("projects", exist_ok=True)
+
+
 app.mount("/apps", StaticFiles(directory="projects"), name="apps")
 
 # ✅ test route
