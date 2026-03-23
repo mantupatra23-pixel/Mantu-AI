@@ -2,40 +2,100 @@
 <html>
 <head>
 <title>Mantu AI</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
 <style>
-body{margin:0;font-family:sans-serif;background:#fff;color:#111;}
-.nav{display:flex;justify-content:space-between;padding:20px;border-bottom:1px solid #eee;}
-.logo{font-weight:bold;font-size:18px;}
-.hero{text-align:center;padding:80px 20px;}
-.hero h1{font-size:36px;}
-.btn{padding:12px 20px;border:none;border-radius:12px;background:black;color:white;cursor:pointer;}
-.features{padding:40px;}
-.card{background:#fff;padding:20px;margin:10px;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.05);}
-.footer{text-align:center;padding:20px;color:#888;}
+body{
+  margin:0;
+  font-family:sans-serif;
+  background:#ffffff;
+}
+
+/* NAV */
+.nav{
+  display:flex;
+  justify-content:space-between;
+  padding:20px;
+}
+
+.logo{
+  font-weight:bold;
+  font-size:18px;
+}
+
+/* HERO */
+.hero{
+  text-align:center;
+  padding:80px 20px;
+}
+
+.hero h1{
+  font-size:36px;
+  margin-bottom:20px;
+}
+
+/* BUTTON */
+.btn{
+  padding:12px 20px;
+  border:none;
+  border-radius:12px;
+  background:black;
+  color:white;
+  cursor:pointer;
+  transition:0.3s;
+}
+
+.btn:hover{
+  transform:scale(1.05);
+}
+
+/* FEATURES */
+.features{
+  padding:40px;
+}
+
+.card{
+  background:#f5f5f5;
+  padding:20px;
+  margin:10px;
+  border-radius:12px;
+  text-align:center;
+}
+
+/* FOOTER */
+.footer{
+  text-align:center;
+  padding:20px;
+  color:#888;
+}
 </style>
+
 </head>
+
 <body>
 
 <div class="nav">
-<div class="logo">⚡ Mantu AI</div>
+  <div class="logo">⚡ Mantu AI</div>
 </div>
 
 <div class="hero">
-<h1>Build Apps with AI Instantly</h1>
-<button class="btn" onclick="go()">Start</button>
+  <h1>Build Apps with AI Instantly</h1>
+  <button class="btn" onclick="go()">Start</button>
 </div>
 
 <div class="features">
-<div class="card">AI Code Generation</div>
-<div class="card">Live Preview</div>
-<div class="card">Deploy & Download</div>
+  <div class="card">AI Code Generation</div>
+  <div class="card">Live Preview</div>
+  <div class="card">Deploy & Download</div>
 </div>
 
 <div class="footer">© 2026 Mantu AI</div>
 
 <script>
-function go(){window.location.href="start.html";}
+function go(){
+  window.location.href = "/start";   // 🔥 FIX HERE
+}
 </script>
 
 </body>
