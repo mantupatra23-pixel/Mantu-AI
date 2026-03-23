@@ -4,10 +4,14 @@ import sqlite3
 from pydantic import BaseModel
 import requests
 import os
+import os, json
 import json
 import shutil
 from dotenv import load_dotenv
 from fastapi.staticfiles import StaticFiles
+import zipfile
+from fastapi.responses import FileResponse
+
 
 # ✅ app define
 app = FastAPI()
@@ -16,8 +20,10 @@ app = FastAPI()
 # 🌐 STATIC PROJECT SERVE (NEW 🔥)
 # =========================
 # 🔥 IMPORTANT FIX
-os.makedirs("projects", exist_ok=True)
+PROJECTS_DIR = "projects"
+os.makedirs(PROJECTS_DIR, exist_ok=True)
 
+ENV_FILE = "env_store.json" 
 
 app.mount("/apps", StaticFiles(directory="projects"), name="apps")
 
@@ -182,19 +188,6 @@ templates = {
 # =========================
 # 🌐 FRONTEND ROUTES
 # =========================
-from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
-
-app = FastAPI()
-
-@app.get("/", response_class=HTMLResponse)
-def landing():
-    return open("landing.html").read()
-
-@app.get("/start", response_class=HTMLResponse)
-def start_page():
-    return open("start.html").read()
-
 @app.get("/builder", response_class=HTMLResponse)
 def builder():
     return open("builder.html").read()
@@ -410,6 +403,64 @@ Return response STRICTLY in JSON format:
     except:
         return {"files": {"index.html": text}}
 
+
+
+
+import base64
+
+@app.post("/deploy/github")
+async def deploy_github(data: dict):
+
+    name = data.get("name", "mantu-app")
+    files = data.get("files", {})
+
+    headers = {
+        "Authorization": f"token {GITHUB_TOKEN}",
+        "Accept": "application/vnd.github.v3+json"
+    }
+
+    # 🔥 CREATE REPO
+    requests.post(
+        "https://api.github.com/user/repos",
+        json={"name": name},
+        headers=headers
+    )
+
+    # 🔥 LOAD ENV (IMPORTANT 🔥)
+    env_path = f"projects/{name}/.env"
+
+    if os.path.exists(env_path):
+        with open(env_path) as f:
+            env_content = f.read()
+            files[".env"] = env_content   # 🔥 ADD ENV TO FILES
+
+    # 🔥 PUSH FILES
+    for fname, content in files.items():
+
+        url = f"https://api.github.com/repos/{USERNAME}/{name}/contents/{fname}"
+
+        encoded = base64.b64encode(content.encode()).decode()
+
+        requests.put(url,
+            json={
+                "message": "init commit",
+                "content": encoded
+            },
+            headers=headers
+        )
+
+    return {
+        "status": "github done",
+        "repo": f"https://github.com/{USERNAME}/{name}"
+    }
+
+@app.get("/deploy/vercel")
+async def deploy_vercel(name: str):
+
+    return {
+        "url": f"https://vercel.com/new/clone?repository-url=https://github.com/{USERNAME}/{name}"
+    }
+
 # =========================
 # 🚀 DOCKER DEPLOY (NEW 🔥)
 # =========================
@@ -471,6 +522,52 @@ async def run_python(code: str):
         return {"error": str(e)}
 
 # =========================
+# 🔐 ENV SAVE SYSTEM
+# =========================
+
+@app.post("/save_env")
+async def save_env(data: dict):
+    name = data.get("project")
+    envs = data.get("env", {})
+
+    try:
+        with open(ENV_FILE, "r") as f:
+            all_env = json.load(f)
+    except:
+        all_env = {}
+
+    all_env[name] = envs
+
+    with open(ENV_FILE, "w") as f:
+        json.dump(all_env, f, indent=2)
+
+    return {"status": "saved"}
+
+# 🔥 CREATE .env FILE INSIDE PROJECT
+    import os
+
+    project_path = f"projects/{name}"
+    os.makedirs(project_path, exist_ok=True)
+
+    env_path = f"{project_path}/.env"
+
+    with open(env_path, "w") as f:
+        for k,v in envs.items():
+            f.write(f"{k}={v}\n")
+
+# =========================
+# 📥 GET ENV (ADD HERE 🔥)
+# =========================
+@app.get("/get_env/{name}")
+async def get_env(name: str):
+    try:
+        with open(ENV_FILE) as f:
+            data = json.load(f)
+        return data.get(name, {})
+    except:
+        return {}
+
+# =========================
 # 🧠 MULTI CODE GENERATOR (NEW 🔥)
 # =========================
 @app.post("/generate/code")
@@ -491,6 +588,37 @@ async def generate_code(data: dict):
     result = ai_generate(prompt, system_prompt)
 
     return {"code": result}
+
+# =========================
+# 🚀 GENERATE MULTI FILE (ADD HERE 🔥)
+# =========================
+@app.post("/generate/files")
+async def generate_files(data: dict):
+    prompt = data.get("prompt")
+
+    system_prompt = """
+Generate a full web project.
+
+Return JSON like:
+{
+ "files": {
+   "index.html": "...",
+   "style.css": "...",
+   "script.js": "..."
+ }
+}
+Only return JSON.
+"""
+
+    result = ai_generate(prompt, system_prompt)
+
+    import json
+    try:
+        parsed = json.loads(result)
+    except:
+        parsed = {"files": {"index.html": result}}
+
+    return parsed
 
 # =========================
 # 🛠 DEBUG / FIX CODE (NEW 🔥)
@@ -558,6 +686,68 @@ async def deploy(data: dict):
     url = f"/apps/{name}/index.html"
 
     return {"url": url}
+
+# =========================
+# 📦 EXPORT ZIP (ADD HERE 🔥)
+# =========================
+import zipfile
+from fastapi.responses import FileResponse
+
+@app.post("/export_zip")
+async def export_zip(data: dict):
+    name = data.get("name", "project")
+    files = data.get("files", {})
+
+    zip_path = f"{name}.zip"
+
+    with zipfile.ZipFile(zip_path, "w") as zipf:
+        for fname, content in files.items():
+            zipf.writestr(fname, content)
+
+    return FileResponse(zip_path, filename=zip_path)
+
+# =========================
+# 💾 SAVE PROJECT (ADD HERE 🔥)
+# =========================
+@app.post("/save_project")
+async def save_project(data: dict):
+    name = data.get("name", "project")
+    files = data.get("files", {})
+
+    path = os.path.join(PROJECTS_DIR, name)
+    os.makedirs(path, exist_ok=True)
+
+    for fname, content in files.items():
+        file_path = os.path.join(path, fname)
+
+        with open(file_path, "w") as f:
+            f.write(content)
+
+    return {"status": "saved", "project": name}
+
+# =========================
+# 📂 LOAD PROJECT (ADD HERE 🔥)
+# =========================
+@app.get("/load_project/{name}")
+async def load_project(name: str):
+    path = os.path.join(PROJECTS_DIR, name)
+
+    files = {}
+
+    for root, _, filenames in os.walk(path):
+        for file in filenames:
+            full_path = os.path.join(root, file)
+            with open(full_path, "r") as f:
+                files[file] = f.read()
+
+    return {"files": files}
+
+# =========================
+# 📁 LIST PROJECTS (ADD HERE 🔥)
+# =========================
+@app.get("/projects")
+async def list_projects():
+    return {"projects": os.listdir(PROJECTS_DIR)}
 
 # =========================
 # 👁️ PREVIEW API (NEW 🔥)
