@@ -6,23 +6,42 @@
 <style>
 body{
   margin:0;
-  font-family:sans-serif;
+  font-family:system-ui;
   background:#0b0f1a;
   color:white;
-  display:flex;
   height:100vh;
+  display:flex;
 }
 
-.sidebar{
-  width:260px;
+/* LEFT PANEL (AI CHAT) */
+.left{
+  width:320px;
+  background:#0f172a;
+  display:flex;
+  flex-direction:column;
+  border-right:1px solid #1e293b;
+}
+
+.logo{
   padding:15px;
-  background:#111827;
+  font-weight:600;
+  border-bottom:1px solid #1e293b;
+}
+
+/* CHAT AREA */
+.chat-box{
+  flex:1;
+  padding:10px;
   overflow:auto;
 }
 
-textarea,input{
+.chat-input{
+  padding:10px;
+  border-top:1px solid #1e293b;
+}
+
+input{
   width:100%;
-  margin-top:10px;
   padding:10px;
   border:none;
   border-radius:8px;
@@ -30,28 +49,57 @@ textarea,input{
   color:white;
 }
 
-button{
-  width:100%;
-  margin-top:10px;
-  padding:10px;
-  border:none;
-  border-radius:8px;
-  background:linear-gradient(45deg,#4f46e5,#9333ea);
-  color:white;
-  cursor:pointer;
-}
-
-.main{
+/* RIGHT SIDE */
+.right{
   flex:1;
   display:flex;
   flex-direction:column;
 }
 
+/* 🔥 TOP NAVBAR */
+.topbar{
+  height:60px;
+  background:#0f172a;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 20px;
+  border-bottom:1px solid #1e293b;
+}
+
+.topbar .actions button{
+  margin-left:10px;
+  padding:8px 16px;
+  border:none;
+  border-radius:6px;
+  background:#1f2937;
+  color:white;
+  cursor:pointer;
+}
+
+.topbar .actions button.primary{
+  background:linear-gradient(90deg,#4f46e5,#9333ea);
+}
+
+/* MAIN CONTENT */
+.main{
+  flex:1;
+  display:flex;
+}
+
+/* EDITOR */
+.editor{
+  width:50%;
+  background:#020617;
+  display:flex;
+  flex-direction:column;
+  border-right:1px solid #1e293b;
+}
+
 #tabs{
   display:flex;
-  background:#111827;
+  background:#0f172a;
   padding:5px;
-  overflow-x:auto;
 }
 
 .tab{
@@ -68,24 +116,27 @@ button{
 
 #editor{
   flex:1;
+  padding:10px;
   background:black;
   color:#00ff00;
-  padding:10px;
-  overflow:auto;
   outline:none;
   white-space:pre;
 }
 
-iframe{
-  height:40%;
-  background:white;
+/* PREVIEW */
+.preview{
+  flex:1;
+  background:#0b0f1a;
 }
 
-.project-item{
-  padding:6px;
-  background:#1f2937;
-  margin-top:5px;
-  border-radius:6px;
+iframe{
+  width:100%;
+  height:100%;
+  border:none;
+}
+
+/* BUTTON */
+button{
   cursor:pointer;
 }
 </style>
@@ -93,43 +144,49 @@ iframe{
 
 <body>
 
-<div class="sidebar">
+<!-- LEFT AI PANEL -->
+<div class="left">
+  <div class="logo">Mantu AI</div>
 
-<h3>⚡ Mantu AI PRO</h3>
+  <div class="chat-box" id="chatBox">
+    <p>Start building your app...</p>
+  </div>
 
-<textarea id="prompt" placeholder="Build full app..."></textarea>
-<button onclick="generateFiles()">⚡ Build App</button>
-
-<input id="newFileName" placeholder="new file name">
-<button onclick="addFile()">➕ New File</button>
-<button onclick="deleteFile()">❌ Delete File</button>
-
-<input id="projectName" placeholder="Project Name">
-<button onclick="saveProject()">💾 Save</button>
-<button onclick="loadProjects()">📂 Load</button>
-
-<div id="projectList"></div>
-
-<button onclick="downloadZip()">📦 Download ZIP</button>
-<button onclick="deployApp()">🚀 Deploy App</button>
-
-<hr>
-
-<h3>ENV Variables</h3>
-<textarea id="envInput" placeholder="KEY=VALUE"></textarea>
-<button onclick="saveEnv()">💾 Save ENV</button>
-
-<hr>
-
-<input id="chatInput" placeholder="Ask AI...">
-<button onclick="chat()">🤖 Send</button>
-
+  <div class="chat-input">
+    <input id="chatInput" placeholder="Build a SaaS app...">
+  </div>
 </div>
 
-<div class="main">
-  <div id="tabs"></div>
-  <pre id="editor" contenteditable="true"></pre>
-  <iframe id="preview"></iframe>
+<!-- RIGHT -->
+<div class="right">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div>Mantu Builder</div>
+
+    <div class="actions">
+      <button onclick="downloadZip()">Export</button>
+      <button onclick="deployApp()">Deploy</button>
+      <button class="primary" onclick="generateFiles()">Build</button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- EDITOR -->
+    <div class="editor">
+      <div id="tabs"></div>
+      <pre id="editor" contenteditable="true"></pre>
+    </div>
+
+    <!-- PREVIEW -->
+    <div class="preview">
+      <iframe id="preview"></iframe>
+    </div>
+
+  </div>
+
 </div>
 
 <script>
@@ -140,192 +197,81 @@ let files = {
   "script.js":"console.log('hi')"
 }
 
-let currentFile = "index.html"
+let currentFile="index.html"
 
 /* GENERATE */
 async function generateFiles(){
-  let prompt=document.getElementById("prompt").value
+ let prompt=document.getElementById("chatInput").value
 
-  let res=await fetch("/generate/files",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({prompt})
-  })
+ let res=await fetch("/generate/files",{
+  method:"POST",
+  headers:{"Content-Type":"application/json"},
+  body:JSON.stringify({prompt})
+ })
 
-  let data=await res.json()
-  files=data.files || {}
-  openFile(Object.keys(files)[0])
-  updatePreview()
+ let data=await res.json()
+ files=data.files || files
+
+ openFile(Object.keys(files)[0])
+ updatePreview()
+
+ document.getElementById("chatBox").innerHTML += "<p>App Generated</p>"
 }
 
 /* TABS */
 function renderTabs(){
-  let tabs=""
-  for(let f in files){
-    tabs+=`<div class="tab ${f==currentFile?"active":""}" onclick="openFile('${f}')">${f}</div>`
-  }
-  document.getElementById("tabs").innerHTML=tabs
+ let tabs=""
+ for(let f in files){
+  tabs+=`<div class="tab ${f==currentFile?"active":""}" onclick="openFile('${f}')">${f}</div>`
+ }
+ tabsEl.innerHTML=tabs
 }
 
 function openFile(f){
-  currentFile=f
-  document.getElementById("editor").textContent=files[f]
-  renderTabs()
+ currentFile=f
+ editor.textContent=files[f]
+ renderTabs()
 }
 
 /* EDIT */
 editor.oninput=()=>{
-  files[currentFile]=editor.textContent
-  updatePreview()
+ files[currentFile]=editor.textContent
+ updatePreview()
 }
 
 /* PREVIEW */
 function updatePreview(){
-  let html=files["index.html"]||""
-  let css=`<style>${files["style.css"]||""}</style>`
-  let js=`<script>${files["script.js"]||""}<\/script>`
-  preview.srcdoc=html+css+js
+ let html=files["index.html"]||""
+ let css=`<style>${files["style.css"]||""}</style>`
+ let js=`<script>${files["script.js"]||""}<\/script>`
+ preview.srcdoc=html+css+js
 }
 
-/* FILE ADD */
-function addFile(){
-  let name=document.getElementById("newFileName").value
-  if(name){
-    files[name]=""
-    openFile(name)
-  }
-}
+/* EXPORT */
+async function downloadZip(){
+ let res=await fetch("/export_zip",{
+  method:"POST",
+  headers:{"Content-Type":"application/json"},
+  body:JSON.stringify({name:"app",files})
+ })
 
-/* FILE DELETE */
-function deleteFile(){
-  delete files[currentFile]
-  openFile(Object.keys(files)[0])
-}
-
-/* SAVE PROJECT */
-async function saveProject(){
-  let name=document.getElementById("projectName").value || "project"
-
-  await fetch("/save_project",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({name,files})
-  })
-
-  alert("Saved 🔥")
-}
-
-/* LOAD PROJECTS */
-async function loadProjects(){
-  const res = await fetch("/projects");
-  const data = await res.json();
-
-  let html = "";
-  data.projects.forEach(p => {
-    html += `<div class="project-item" onclick="openProject('${p}')">${p}</div>`;
-  });
-
-  document.getElementById("projectList").innerHTML = html;
-}
-
-/* OPEN PROJECT */
-async function openProject(name){
-  const res = await fetch(`/load_project/${name}`);
-  const data = await res.json();
-
-  files = data.files;
-  openFile(Object.keys(files)[0])
-  updatePreview()
-
-  loadEnv(name)
-}
-
-/* DOWNLOAD ZIP */
-async function downloadZip() {
-  const name = document.getElementById("projectName").value || "project";
-
-  const res = await fetch("/export_zip", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({name, files})
-  });
-
-  const blob = await res.blob();
-  const url = window.URL.createObjectURL(blob);
-
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = name + ".zip";
-  a.click();
-}
-
-/* 🔥 CLEAN SAVE ENV */
-async function saveEnv(){
-
-  const project = document.getElementById("projectName").value || "project"
-  const raw = document.getElementById("envInput").value
-
-  let env = {}
-
-  raw.split("\n").forEach(line => {
-    if(!line.trim()) return
-
-    const [k,v] = line.split("=")
-    if(k && v){
-      env[k.trim()] = v.trim()
-    }
-  })
-
-  await fetch("/save_env", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({project, env})
-  })
-
-  alert("ENV Saved 🔥")
-}
-
-/* LOAD ENV */
-async function loadEnv(name){
-  let res=await fetch("/get_env/"+name)
-  let data=await res.json()
-
-  let text=""
-  for(let k in data){
-    text+=k+"="+data[k]+"\n"
-  }
-
-  document.getElementById("envInput").value=text
+ let blob=await res.blob()
+ let url=URL.createObjectURL(blob)
+ let a=document.createElement("a")
+ a.href=url
+ a.download="app.zip"
+ a.click()
 }
 
 /* DEPLOY */
 async function deployApp(){
+ await fetch("/deploy/github",{
+  method:"POST",
+  headers:{"Content-Type":"application/json"},
+  body:JSON.stringify({name:"app",files})
+ })
 
-  const name = document.getElementById("projectName").value || "mantu-app"
-
-  await fetch("/deploy/github",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({name,files})
-  })
-
-  alert("GitHub Uploaded ✅")
-
-  window.location.href = `/deploy/vercel?name=${name}`
-}
-
-/* CHAT */
-async function chat(){
-  let msg=document.getElementById("chatInput").value
-
-  let res=await fetch("/chat",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({message:msg})
-  })
-
-  let data=await res.json()
-  alert(data.reply)
+ window.location.href="/deploy/vercel?name=app"
 }
 
 /* INIT */
