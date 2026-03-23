@@ -181,17 +181,17 @@ templates = {
 def landing():
     return open("landing.html").read()
 
-@app.get("/app", response_class=HTMLResponse)
-def app_page():
-    return open("index.html").read()
+@app.get("/start", response_class=HTMLResponse)
+def start_page():
+    return open("start.html").read()
 
 @app.get("/builder", response_class=HTMLResponse)
 def builder():
     return open("builder.html").read()
 
-@app.get("/start.html", response_class=HTMLResponse)
-def start_page():
-    return open("start.html").read
+@app.get("/app", response_class=HTMLResponse)
+def app_page():
+    return open("index.html").read()
 
 # =========================
 # 🧠 TECH DETECTOR (NEW 🔥)
