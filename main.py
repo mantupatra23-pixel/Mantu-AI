@@ -8,10 +8,18 @@ import shutil
 from dotenv import load_dotenv
 from fastapi.staticfiles import StaticFiles
 
+# ✅ app define
+app = FastAPI()
+
 # =========================
 # 🌐 STATIC PROJECT SERVE (NEW 🔥)
 # =========================
 app.mount("/apps", StaticFiles(directory="projects"), name="apps")
+
+# ✅ test route
+@app.get("/api")
+def home():
+    return {"msg": "Mantu AI Backend Running 🚀"}
 
 # =========================
 # 🗄️ DATABASE INIT (NEW 🔥)
@@ -144,7 +152,6 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 GITHUB_USERNAME = os.getenv("GITHUB_USERNAME")
 
-app = FastAPI()
 
 # =========================
 # 📦 MODEL
