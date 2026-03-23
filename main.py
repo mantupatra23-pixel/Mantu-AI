@@ -188,6 +188,10 @@ templates = {
 # =========================
 # 🌐 FRONTEND ROUTES
 # =========================
+@app.get("/", response_class=HTMLResponse)
+def home():
+    return open("index.html").read()
+
 @app.get("/builder", response_class=HTMLResponse)
 def builder():
     return open("builder.html").read()
