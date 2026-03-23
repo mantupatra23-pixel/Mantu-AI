@@ -6,57 +6,98 @@
 <style>
 body{
   margin:0;
-  font-family: 'Segoe UI', sans-serif;
-  background: radial-gradient(circle at center, #0f172a, #020617);
+  font-family:sans-serif;
+  background:#020617;
   color:white;
+  overflow:hidden;
+}
+
+/* 🌌 3D BACKGROUND */
+.bg{
+  position:fixed;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  z-index:-1;
+}
+
+.bg span{
+  position:absolute;
+  width:4px;
+  height:4px;
+  background:white;
+  border-radius:50%;
+  animation:move 20s linear infinite;
+  opacity:0.3;
+}
+
+@keyframes move{
+  from{
+    transform:translateY(0px);
+  }
+  to{
+    transform:translateY(-1000px);
+  }
+}
+
+/* GENERATE STARS */
+.bg span:nth-child(1){left:10%;animation-duration:15s;}
+.bg span:nth-child(2){left:20%;animation-duration:20s;}
+.bg span:nth-child(3){left:30%;animation-duration:25s;}
+.bg span:nth-child(4){left:40%;animation-duration:18s;}
+.bg span:nth-child(5){left:50%;animation-duration:22s;}
+.bg span:nth-child(6){left:60%;animation-duration:17s;}
+.bg span:nth-child(7){left:70%;animation-duration:23s;}
+.bg span:nth-child(8){left:80%;animation-duration:19s;}
+.bg span:nth-child(9){left:90%;animation-duration:21s;}
+
+/* CENTER */
+.container{
   display:flex;
   flex-direction:column;
-  align-items:center;
   justify-content:center;
+  align-items:center;
   height:100vh;
   text-align:center;
 }
 
-/* LOGO */
-.logo{
-  position:absolute;
-  top:20px;
-  left:20px;
-  font-weight:bold;
-  font-size:18px;
-}
-
-/* HEADING */
+/* TITLE */
 h1{
-  font-size:32px;
+  font-size:36px;
   font-weight:600;
 }
 
 h1 span{
-  color:#60a5fa;
+  background:linear-gradient(90deg,#60a5fa,#a78bfa);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
 }
 
-/* PROMPT BOX */
-.prompt-box{
+/* GLASS BOX */
+.input-box{
   margin-top:20px;
-  background:#111827;
-  border:1px solid #1f2937;
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(20px);
   padding:15px;
-  border-radius:14px;
-  width:90%;
-  max-width:500px;
-  box-shadow:0 0 40px rgba(59,130,246,0.2);
+  border-radius:12px;
+  width:320px;
+  box-shadow:0 0 60px rgba(79,70,229,0.4);
+  animation:fadeIn 1s ease;
 }
 
-/* INPUT */
+@keyframes fadeIn{
+  from{opacity:0; transform:translateY(20px);}
+  to{opacity:1; transform:translateY(0);}
+}
+
 input{
   width:100%;
   padding:12px;
-  background:#020617;
   border:none;
-  outline:none;
-  color:white;
   border-radius:8px;
+  background:#020617;
+  color:white;
+  outline:none;
 }
 
 /* BUTTON */
@@ -65,44 +106,77 @@ button{
   width:100%;
   padding:12px;
   border:none;
-  border-radius:10px;
-  background:linear-gradient(45deg,#3b82f6,#9333ea);
+  border-radius:8px;
+  background:linear-gradient(90deg,#4f46e5,#9333ea);
   color:white;
   cursor:pointer;
-  font-weight:bold;
+  transition:0.3s;
+}
+
+button:hover{
+  transform:scale(1.05);
+  box-shadow:0 0 20px #9333ea;
+}
+
+/* 🌍 BOTTOM 3D GLOW */
+.glow{
+  position:absolute;
+  bottom:-200px;
+  width:900px;
+  height:400px;
+  background: radial-gradient(circle, rgba(59,130,246,0.6), transparent 70%);
+  filter: blur(120px);
+  animation:pulse 4s infinite;
+}
+
+@keyframes pulse{
+  0%{opacity:0.6;}
+  50%{opacity:1;}
+  100%{opacity:0.6;}
 }
 
 /* FOOTER */
 .footer{
   position:absolute;
-  bottom:10px;
+  bottom:20px;
+  width:100%;
+  text-align:center;
   font-size:12px;
-  color:#94a3b8;
+  opacity:0.6;
 }
-</style>
 
+</style>
 </head>
 
 <body>
 
-<div class="logo">⚡ Mantu AI</div>
+<!-- 🌌 3D BACKGROUND -->
+<div class="bg">
+  <span></span><span></span><span></span><span></span>
+  <span></span><span></span><span></span><span></span>
+  <span></span>
+</div>
+
+<!-- MAIN -->
+<div class="container">
 
 <h1>What will you <span>build</span> today?</h1>
 
-<div class="prompt-box">
-  <input id="prompt" placeholder="Build a SaaS app, portfolio, dashboard..." />
+<div class="input-box">
+  <input id="prompt" placeholder="Build a SaaS app, portfolio...">
   <button onclick="goBuilder()">⚡ Build now</button>
 </div>
 
-<div class="footer">
-  Powered by Mantu AI 🚀
 </div>
+
+<div class="glow"></div>
+
+<div class="footer">Powered by Mantu AI 🚀</div>
 
 <script>
 function goBuilder(){
-  let text=document.getElementById("prompt").value
-  localStorage.setItem("prompt",text)
-  window.location.href="/builder"
+  let p=document.getElementById("prompt").value
+  window.location.href="/builder?prompt="+encodeURIComponent(p)
 }
 </script>
 
