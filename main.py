@@ -362,40 +362,31 @@ def push_code(project):
 # =========================
 # 🤖 AI GENERATE (GROQ)
 # =========================
-@app.post("/generate")
-async def generate(prompt: Prompt):
+def ai_generate(prompt, system_prompt=""):
+
+    url = "https://api.groq.com/openai/v1/chat/completions"
+
+    headers = {
+        "Authorization": f"Bearer {GROQ_API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    data = {
+        "model": "llama3-70b-8192",
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": prompt}
+        ]
+    }
+
     try:
-        url = "https://api.groq.com/openai/v1/chat/completions"
+        res = requests.post(url, headers=headers, json=data)
+        result = res.json()
 
-        headers = {
-            "Authorization": f"Bearer {GROQ_API_KEY}",
-            "Content-Type": "application/json"
-        }
-
-        messages = [{"role": "system", "content": "You are Mantu AI"}]
-
-        for msg in chat_history[-5:]:
-            if "user" in msg:
-                messages.append({"role": "user", "content": msg["user"]})
-            if "ai" in msg:
-                messages.append({"role": "assistant", "content": msg["ai"]})
-
-        messages.append({"role": "user", "content": prompt.text})
-
-        res = requests.post(url, headers=headers, json={
-            "model": "llama3-70b-8192",
-            "messages": messages
-        })
-
-        reply = res.json()["choices"][0]["message"]["content"]
-
-        chat_history.append({"user": prompt.text})
-        chat_history.append({"ai": reply})
-
-        return {"response": reply}
+        return result["choices"][0]["message"]["content"]
 
     except Exception as e:
-        return {"response": str(e)}
+        return f"Error: {str(e)}"
 
 # =========================
 # 🚀 DOCKER DEPLOY (NEW 🔥)
@@ -462,18 +453,18 @@ async def run_python(code: str):
 # =========================
 @app.post("/generate/code")
 async def generate_code(data: dict):
-    prompt = data.get("prompt")
-    lang = data.get("lang")
+    prompt = data.get("prompt", "")
+    lang = data.get("lang", "")
 
     system_map = {
-        "python": "You are a Python expert. Return only clean Python code.",
-        "html": "You are a frontend expert. Generate HTML, CSS, JS.",
-        "node": "You are a Node.js expert. Generate backend API.",
-        "flutter": "You are a Flutter expert. Generate mobile app UI.",
-        "fullstack": "Generate full stack app (frontend + backend)."
+        "html": "Create clean modern HTML CSS UI",
+        "python": "Write Python code",
+        "node": "Write Node.js backend",
+        "flutter": "Create Flutter UI",
+        "fullstack": "Create full stack app"
     }
 
-    system_prompt = system_map.get(lang, "You are a coding expert.")
+    system_prompt = system_map.get(lang, "")
 
     result = ai_generate(prompt, system_prompt)
 
