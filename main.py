@@ -383,6 +383,10 @@ def ai_generate(prompt, system_prompt=""):
         res = requests.post(url, headers=headers, json=data)
         result = res.json()
 
+        # 🔥 SAFE CHECK (fix 'choices' error)
+        if "choices" not in result:
+            return f"API Error: {result}"
+
         return result["choices"][0]["message"]["content"]
 
     except Exception as e:
