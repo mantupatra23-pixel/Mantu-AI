@@ -1,219 +1,124 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Builder</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-body{
-    margin:0;
-    font-family:sans-serif;
-    background:#0f172a;
-    color:white;
-}
-
-/* TOP BAR */
-.topbar{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    padding:12px 20px;
-    background:#020617;
-    border-bottom:1px solid #1e293b;
-}
-
-.logo{
-    font-weight:bold;
-    color:#22c55e;
-}
-
-.tabs{
-    display:flex;
-    gap:12px;
-    font-size:13px;
-}
-
-.tabs div{
-    cursor:pointer;
-    color:#94a3b8;
-}
-
-.tabs div:hover{
-    color:white;
-}
-
-.publish{
-    background:#22c55e;
-    border:none;
-    padding:8px 12px;
-    border-radius:6px;
-    cursor:pointer;
-}
-
-/* MAIN */
-.main{
-    display:flex;
-    height:85vh;
-}
-
-/* LEFT PANEL */
-.left{
-    width:30%;
-    padding:15px;
-    background:#020617;
-    border-right:1px solid #1e293b;
-    overflow:auto;
-}
-
-/* RIGHT PANEL */
-.right{
-    flex:1;
-    padding:15px;
-}
-
-/* PREVIEW */
-.preview{
-    background:#020617;
-    border-radius:10px;
-    padding:10px;
-    height:60%;
-    margin-bottom:10px;
-}
-
-/* CODE */
-.code{
-    background:black;
-    color:#22c55e;
-    padding:10px;
-    border-radius:10px;
-    height:35%;
-    overflow:auto;
-}
-
-/* CHAT */
-.chat{
-    position:fixed;
-    bottom:0;
-    width:100%;
-    background:#020617;
-    padding:10px;
-    display:flex;
-    gap:10px;
-}
-
-.chat input{
-    flex:1;
-    padding:10px;
-    border-radius:8px;
-    border:none;
-}
-
-.chat button{
-    background:#22c55e;
-    border:none;
-    padding:10px;
-    border-radius:8px;
-    cursor:pointer;
-}
-
+body{margin:0;font-family:sans-serif;background:#f9fafb;}
+.container{display:flex;height:100vh;}
+.left{width:35%;padding:20px;background:#fff;border-right:1px solid #eee;}
+.right{flex:1;display:flex;flex-direction:column;}
+textarea,select{width:100%;padding:10px;margin-top:10px;border-radius:10px;border:1px solid #ddd;}
+button{margin-top:10px;padding:10px;border:none;border-radius:10px;cursor:pointer;}
+iframe{flex:1;border:none;}
+.output{height:150px;background:black;color:#22c55e;padding:10px;overflow:auto;}
+.chat{height:150px;overflow:auto;border-top:1px solid #eee;padding:10px;}
 </style>
 </head>
-
 <body>
 
-<!-- TOP -->
-<div class="topbar">
+<div class="container">
 
-    <div class="logo">⚡ Mantu AI</div>
+<div class="left">
+<h3>Prompt</h3>
+<textarea id="prompt"></textarea>
 
-    <div class="tabs">
-        <div id="project">Project</div>
-        <div>Sandbox</div>
-        <div>Environment</div>
-        <div>Config</div>
-        <div>Users</div>
-        <div>Database</div>
-        <div>Monitoring</div>
-        <div>Logs</div>
-        <div>Email</div>
-        <div>Files</div>
-    </div>
+<select id="lang">
+<option value="html">HTML</option>
+<option value="python">Python</option>
+<option value="node">Node</option>
+<option value="flutter">Flutter</option>
+<option value="fullstack">Full Stack</option>
+</select>
 
-    <button class="publish" onclick="publish()">Publish</button>
+<button onclick="generate()">Generate</button>
+<button onclick="preview()">Preview</button>
+<button onclick="debug()">Fix Code</button>
+<button onclick="run()">Run Python</button>
+<button onclick="download()">Download</button>
 
-</div>
-
-<!-- MAIN -->
-<div class="main">
-
-    <!-- LEFT -->
-    <div class="left">
-        <h3>AI Output</h3>
-        <p id="output">Generating...</p>
-    </div>
-
-    <!-- RIGHT -->
-    <div class="right">
-
-        <div class="preview">
-            <h3>Preview</h3>
-            <iframe src="/" width="100%" height="90%" style="border:none;border-radius:10px;"></iframe>
-        </div>
-
-        <div class="code" id="code">
-# Code will appear here
-        </div>
-
-    </div>
+<h3>Dev Chat</h3>
+<input id="chatInput" placeholder="Ask AI..." />
+<button onclick="chat()">Send</button>
 
 </div>
 
-<!-- CHAT -->
-<div class="chat">
-    <input id="msg" placeholder="Type message...">
-    <button onclick="send()">Send</button>
+<div class="right">
+<iframe id="frame"></iframe>
+<div class="output" id="output"></div>
+<div class="chat" id="chatBox"></div>
+</div>
+
 </div>
 
 <script>
+let currentCode="";
+let projectName="ai-project";
 
-// LOAD IDEA
-let idea = localStorage.getItem("idea");
-document.getElementById("project").innerText = idea || "AI Project";
-
-// AUTO GENERATE
-fetch("/generate",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body: JSON.stringify({idea: idea})
+async function generate(){
+try{
+let res=await fetch("http://localhost:8000/generate/code",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+prompt:document.getElementById("prompt").value,
+lang:document.getElementById("lang").value
 })
-.then(res=>res.json())
-.then(data=>{
-    document.getElementById("output").innerText = data.result;
-    document.getElementById("code").innerText = data.code;
+});
+let data=await res.json();
+currentCode=data.code;
+document.getElementById("output").innerText=currentCode;
+}catch(e){alert("error");}
+}
+
+function preview(){
+document.getElementById("frame").srcdoc=currentCode;
+}
+
+async function debug(){
+let res=await fetch("http://localhost:8000/debug",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({code:currentCode})
+});
+let data=await res.json();
+currentCode=data.fixed;
+document.getElementById("output").innerText=currentCode;
+}
+
+async function run(){
+let res=await fetch("http://localhost:8000/run/python",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({code:currentCode})
+});
+let data=await res.json();
+document.getElementById("output").innerText=data.output||data.error;
+}
+
+function download(){
+window.open(`http://localhost:8000/download/${projectName}`);
+}
+
+async function chat(){
+let msg=document.getElementById("chatInput").value;
+
+let res=await fetch("http://localhost:8000/dev-chat",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+prompt:msg,
+code:currentCode
+})
 });
 
-// CHAT
-function send(){
-    let msg = document.getElementById("msg").value;
+let data=await res.json();
 
-    fetch("/chat",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({message: msg})
-    })
-    .then(res=>res.json())
-    .then(data=>{
-        document.getElementById("output").innerText += "\n\nAI: " + data.reply;
-    });
+currentCode=data.updated_code;
 
-    document.getElementById("msg").value="";
+document.getElementById("chatBox").innerHTML+=`<p>👤 ${msg}</p><p>🤖 Updated</p>`;
+document.getElementById("output").innerText=currentCode;
 }
-
-// PUBLISH
-function publish(){
-    alert("🚀 App Published!");
-}
-
 </script>
 
 </body>

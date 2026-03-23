@@ -1,38 +1,23 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Mantu AI</title>
+<title>Start</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body{margin:0;background:#fff;display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;}
+.box{text-align:center;}
+button{padding:12px 20px;border:none;border-radius:12px;background:black;color:white;cursor:pointer;}
+</style>
 </head>
+<body>
 
-<body style="
-background:black;
-color:white;
-text-align:center;
-padding:80px;
-font-family:sans-serif;
-">
-
-<h1 style="font-size:40px;">⚡ Mantu AI</h1>
-<p style="color:#aaa;">Create Apps with AI in Seconds</p>
-
-<button onclick="start()" style="
-padding:14px 24px;
-border:none;
-border-radius:12px;
-background:#22c55e;
-color:white;
-font-size:18px;
-margin-top:30px;
-cursor:pointer;
-">
-Start 🚀
-</button>
+<div class="box">
+<h1>Start Building with AI</h1>
+<button onclick="go()">Open Builder</button>
+</div>
 
 <script>
-function start(){
-  window.location.href = "/landing";
-}
+function go(){window.location.href="builder.html";}
 </script>
 
 </body>

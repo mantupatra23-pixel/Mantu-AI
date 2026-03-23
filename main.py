@@ -14,6 +14,24 @@ from fastapi.staticfiles import StaticFiles
 app.mount("/apps", StaticFiles(directory="projects"), name="apps")
 
 # =========================
+# 🗄️ DATABASE INIT (NEW 🔥)
+# =========================
+conn = sqlite3.connect("projects.db", check_same_thread=False)
+cursor = conn.cursor()
+
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS projects (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT,
+    prompt TEXT,
+    language TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)
+""")
+
+conn.commit()
+
+# =========================
 # 🤖 GROQ AI CODE GENERATOR
 # =========================
 load_dotenv()
@@ -388,6 +406,156 @@ def deploy_project(name):
 
 
 # =========================
+# 🐍 PYTHON CODE GENERATOR (NEW 🔥)
+# =========================
+@app.post("/generate/python")
+async def generate_python(prompt: str):
+    system_prompt = """
+You are a Python expert.
+Generate clean production-ready Python code.
+Only return code.
+"""
+    result = ai_generate(prompt, system_prompt)
+    return {"code": result}
+
+# =========================
+# ▶️ RUN PYTHON CODE (NEW 🔥)
+# =========================
+import subprocess
+import uuid
+
+@app.post("/run/python")
+async def run_python(code: str):
+    filename = f"/tmp/{uuid.uuid4().hex}.py"
+
+    with open(filename, "w") as f:
+        f.write(code)
+
+    try:
+        result = subprocess.run(
+            ["python3", filename],
+            capture_output=True,
+            text=True,
+            timeout=10
+        )
+        return {
+            "output": result.stdout,
+            "error": result.stderr
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+# =========================
+# 🧠 MULTI CODE GENERATOR (NEW 🔥)
+# =========================
+@app.post("/generate/code")
+async def generate_code(data: dict):
+    prompt = data.get("prompt")
+    lang = data.get("lang")
+
+    system_map = {
+        "python": "You are a Python expert. Return only clean Python code.",
+        "html": "You are a frontend expert. Generate HTML, CSS, JS.",
+        "node": "You are a Node.js expert. Generate backend API.",
+        "flutter": "You are a Flutter expert. Generate mobile app UI.",
+        "fullstack": "Generate full stack app (frontend + backend)."
+    }
+
+    system_prompt = system_map.get(lang, "You are a coding expert.")
+
+    result = ai_generate(prompt, system_prompt)
+
+    return {"code": result}
+
+# =========================
+# 🛠 DEBUG / FIX CODE (NEW 🔥)
+# =========================
+@app.post("/debug")
+async def debug_code(data: dict):
+    code = data.get("code")
+
+    system_prompt = """
+Fix this code.
+Return ONLY corrected code.
+No explanation.
+"""
+
+    result = ai_generate(code, system_prompt)
+
+    return {"fixed": result}
+
+# =========================
+# 👨‍💻 DEV CHAT (CODE MODIFY 🔥)
+# =========================
+@app.post("/dev-chat")
+async def dev_chat(data: dict):
+    prompt = data.get("prompt")
+    code = data.get("code")
+
+    system_prompt = f"""
+You are a senior developer.
+
+User request:
+{prompt}
+
+Existing code:
+{code}
+
+Modify the code accordingly.
+Return only updated code.
+"""
+
+    result = ai_generate(prompt, system_prompt)
+
+    return {"updated_code": result}
+
+# =========================
+# 👁️ PREVIEW API (NEW 🔥)
+# =========================
+class Code(BaseModel):
+    html: str
+
+@app.post("/preview")
+def preview(code: Code):
+    return {"html": code.html}
+
+# =========================
+# 💾 SAVE PROJECT (DB 🔥)
+# =========================
+@app.post("/save-project")
+def save_project(data: dict):
+    name = data.get("name")
+    prompt = data.get("prompt")
+    language = data.get("language")
+
+    cursor.execute(
+        "INSERT INTO projects (name, prompt, language) VALUES (?, ?, ?)",
+        (name, prompt, language)
+    )
+    conn.commit()
+
+    return {"msg": "saved"}
+
+# =========================
+# 📊 GET PROJECTS LIST (NEW 🔥)
+# =========================
+@app.get("/projects")
+def get_projects():
+    cursor.execute("SELECT * FROM projects ORDER BY id DESC")
+    rows = cursor.fetchall()
+
+    projects = []
+    for r in rows:
+        projects.append({
+            "id": r[0],
+            "name": r[1],
+            "prompt": r[2],
+            "language": r[3]
+        })
+
+    return {"projects": projects}
+
+# =========================
 # 🤖 SMART CHAT (FINAL 🔥)
 # =========================
 @app.post("/chat")
@@ -400,6 +568,13 @@ async def chat(prompt: Prompt):
 
         # create project
         create_fullstack_project(project_name, text)
+
+        # 🔥 SAVE TO DB
+        save_project({
+        "name": project_name,
+        "prompt": text,
+        "language": "fullstack"
+       })
 
         # deploy
         url = deploy_project(project_name)
@@ -516,6 +691,26 @@ async def auto_deploy(prompt: Prompt):
 @app.get("/deploy-logs")
 def logs():
     return {"logs": deploy_logs}
+
+# =========================
+# 📦 DOWNLOAD PROJECT ZIP (NEW 🔥)
+# =========================
+import os
+import zipfile
+from fastapi.responses import FileResponse
+
+@app.get("/download/{name}")
+def download_project(name: str):
+    folder = f"projects/{name}"
+    zip_path = f"{folder}.zip"
+
+    with zipfile.ZipFile(zip_path, 'w') as zipf:
+        for root, dirs, files in os.walk(folder):
+            for file in files:
+                full_path = os.path.join(root, file)
+                zipf.write(full_path, os.path.relpath(full_path, folder))
+
+    return FileResponse(zip_path, filename=f"{name}.zip")
 
 # =========================
 # 🎨 TEMPLATE API
