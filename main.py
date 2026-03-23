@@ -15,6 +15,7 @@ app = FastAPI()
 # =========================
 # 🌐 STATIC PROJECT SERVE (NEW 🔥)
 # =========================
+app.mount("/apps", StaticFiles(directory="projects"), name="apps")
 
 # ✅ test route
 @app.get("/api")
@@ -372,25 +373,38 @@ def ai_generate(prompt, system_prompt=""):
     }
 
     data = {
-        "model": "llama3-70b-8192",
+        "model": "mixtral-8x7b-32768",
         "messages": [
-            {"role": "system", "content": system_prompt},
+            {
+                "role": "system",
+                "content": system_prompt + """
+Return response STRICTLY in JSON format:
+
+{
+  "files": {
+    "index.html": "...",
+    "style.css": "...",
+    "script.js": "..."
+  }
+}
+"""
+            },
             {"role": "user", "content": prompt}
         ]
     }
 
+    res = requests.post(url, headers=headers, json=data)
+    result = res.json()
+
+    if "choices" not in result:
+        return result
+
+    text = result["choices"][0]["message"]["content"]
+
     try:
-        res = requests.post(url, headers=headers, json=data)
-        result = res.json()
-
-        # 🔥 SAFE CHECK (fix 'choices' error)
-        if "choices" not in result:
-            return f"API Error: {result}"
-
-        return result["choices"][0]["message"]["content"]
-
-    except Exception as e:
-        return f"Error: {str(e)}"
+        return eval(text)
+    except:
+        return {"files": {"index.html": text}}
 
 # =========================
 # 🚀 DOCKER DEPLOY (NEW 🔥)
@@ -515,6 +529,31 @@ Return only updated code.
     result = ai_generate(prompt, system_prompt)
 
     return {"updated_code": result}
+
+# =========================
+# 🚀 DEPLOY (ADD HERE 🔥)
+# =========================
+@app.post("/deploy")
+async def deploy(data: dict):
+
+    name = data.get("name", "app")
+
+    path = f"projects/{name}"
+    os.makedirs(path, exist_ok=True)
+
+    files = data.get("files", {})
+
+    for filename, content in files.items():
+        file_path = os.path.join(path, filename)
+
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+
+        with open(file_path, "w") as f:
+            f.write(content)
+
+    url = f"/apps/{name}/index.html"
+
+    return {"url": url}
 
 # =========================
 # 👁️ PREVIEW API (NEW 🔥)
