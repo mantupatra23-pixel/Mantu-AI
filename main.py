@@ -458,11 +458,11 @@ async def deploy_github(data: dict):
         "repo": f"https://github.com/{USERNAME}/{name}"
     }
 
-@app.get("/deploy/vercel")
-async def deploy_vercel(name: str):
 
+@app.get("/deploy/vercel")
+def deploy_vercel(name: str):
     return {
-        "url": f"https://vercel.com/new/clone?repository-url=https://github.com/{USERNAME}/{name}"
+        "url": f"https://vercel.com/new/clone?repository-url=https://github.com/{GITHUB_USERNAME}/{name}"
     }
 
 # =========================
