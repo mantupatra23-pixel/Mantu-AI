@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, FileResponse
+import sqlite3
 from pydantic import BaseModel
 import requests
 import os
