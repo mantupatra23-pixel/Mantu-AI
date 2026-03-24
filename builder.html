@@ -165,11 +165,11 @@ async function generate(){
   setStatus("🤖 AI Thinking...")
   setTopStatus("Streaming...")
 
-  let res = await fetch("/stream",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({prompt})
-  })
+  fetch("https://mantu-ai.onrender.com/stream",{
+  method:"POST",
+  headers:{"Content-Type":"application/json"},
+  body:JSON.stringify({prompt})
+})
 
   const reader = res.body.getReader()
   const decoder = new TextDecoder()
