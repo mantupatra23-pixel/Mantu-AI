@@ -13,7 +13,7 @@ body{
   display:flex;
 }
 
-/* LEFT PANEL */
+/* LEFT */
 .left{
   width:300px;
   background:#0f172a;
@@ -21,17 +21,16 @@ body{
   flex-direction:column;
   border-right:1px solid #1e293b;
   padding:10px;
-  gap:6px;
+  gap:8px;
 }
 
 .logo{
-  padding:10px;
   font-weight:bold;
+  padding-bottom:10px;
   border-bottom:1px solid #1e293b;
 }
 
-/* INPUTS */
-textarea, input{
+textarea,input{
   width:100%;
   padding:10px;
   border:none;
@@ -84,6 +83,11 @@ iframe{
   flex:1;
   border:none;
 }
+
+.status{
+  font-size:12px;
+  opacity:0.7;
+}
 </style>
 </head>
 
@@ -91,9 +95,12 @@ iframe{
 
 <!-- LEFT -->
 <div class="left">
+
   <div class="logo">⚡ Mantu AI</div>
 
-  <textarea id="prompt" placeholder="Build app..."></textarea>
+  <div id="status" class="status">Idle...</div>
+
+  <textarea id="prompt" placeholder="Describe your app..."></textarea>
   <button onclick="generate()">⚡ Build App</button>
 
   <input id="fileName" placeholder="new file name">
@@ -108,6 +115,7 @@ iframe{
 
   <input id="chatInput" placeholder="Ask AI...">
   <button onclick="chat()">🤖 Chat</button>
+
 </div>
 
 <!-- RIGHT -->
@@ -115,6 +123,7 @@ iframe{
 
   <div class="topbar">
     <div>Mantu Builder</div>
+    <div id="topStatus" class="status">Ready</div>
     <div>
       <button onclick="download()">Export</button>
       <button onclick="deploy()">Deploy</button>
@@ -135,39 +144,112 @@ let files = {
 }
 
 let currentFile="index.html"
-let editor = document.getElementById("editor")
-let preview = document.getElementById("preview")
+let editor=document.getElementById("editor")
+let preview=document.getElementById("preview")
 
-/* GENERATE */
+function setStatus(msg){
+  document.getElementById("status").innerText=msg
+}
+
+function setTopStatus(msg){
+  document.getElementById("topStatus").innerText=msg
+}
+
+////////////////////////////////////////
+//// 🚀 REAL AI STREAMING GENERATE ////
+////////////////////////////////////////
+
 async function generate(){
   let prompt=document.getElementById("prompt").value
 
-  let res=await fetch("/generate/files",{
+  setStatus("🤖 AI Thinking...")
+  setTopStatus("Streaming...")
+
+  let res = await fetch("/stream",{
     method:"POST",
     headers:{"Content-Type":"application/json"},
     body:JSON.stringify({prompt})
   })
 
-  let data=await res.json()
-  files=data.files || {}
+  const reader = res.body.getReader()
+  const decoder = new TextDecoder()
 
-  openFile(Object.keys(files)[0])
+  let fullText = ""
+
+  while(true){
+    const {done, value} = await reader.read()
+    if(done) break
+
+    let chunk = decoder.decode(value)
+    fullText += chunk
+
+    editor.textContent = fullText   // 🔥 LIVE typing
+  }
+
+  setStatus("⚡ Parsing Code...")
+
+  parseFiles(fullText)
+
+  setStatus("✅ Done")
+  setTopStatus("Ready")
 }
 
-/* OPEN FILE */
-function openFile(name){
+////////////////////////////////////////
+//// 📂 AUTO FILE SPLIT ////
+////////////////////////////////////////
+
+function parseFiles(text){
+
+  let html = extract(text,"index.html")
+  let css = extract(text,"style.css")
+  let js = extract(text,"script.js")
+
+  files = {
+    "index.html": html || "<h1>No HTML</h1>",
+    "style.css": css || "",
+    "script.js": js || ""
+  }
+
+  openFile("index.html")
+}
+
+function extract(text, filename){
+  let regex = new RegExp(filename+"[\\s\\S]*?```[a-z]*([\\s\\S]*?)```","i")
+  let match = text.match(regex)
+  return match ? match[1].trim() : ""
+}
+
+////////////////////////////////////////
+//// 📂 FILE OPEN ////
+////////////////////////////////////////
+
+async function openFile(name){
   currentFile=name
-  editor.textContent=files[name] || ""
+  let content=files[name] || ""
+
+  editor.textContent=""
+
+  for(let i=0;i<content.length;i++){
+    editor.textContent += content[i]
+    await new Promise(r=>setTimeout(r,1))
+  }
+
   updatePreview()
 }
 
-/* EDIT */
+////////////////////////////////////////
+//// ✏️ EDIT ////
+////////////////////////////////////////
+
 editor.oninput=()=>{
   files[currentFile]=editor.textContent
   updatePreview()
 }
 
-/* PREVIEW FIXED */
+////////////////////////////////////////
+//// 🖥 PREVIEW ////
+////////////////////////////////////////
+
 function updatePreview(){
   let html = files["index.html"] || ""
   let css = "<style>"+(files["style.css"] || "")+"</style>"
@@ -175,12 +257,15 @@ function updatePreview(){
   let jsCode = files["script.js"] || ""
   jsCode = jsCode.replaceAll("</script>", "<\\/script>")
 
-  let js = "<script>" + jsCode + "<\/script>"
+  let js = "<script>"+jsCode+"<\/script>"
 
   preview.srcdoc = html + css + js
 }
 
-/* ADD FILE */
+////////////////////////////////////////
+//// ➕ FILE ADD ////
+////////////////////////////////////////
+
 function addFile(){
   let name=document.getElementById("fileName").value
   if(name){
@@ -189,7 +274,10 @@ function addFile(){
   }
 }
 
-/* SAVE */
+////////////////////////////////////////
+//// 💾 SAVE ////
+////////////////////////////////////////
+
 async function save(){
   let name=document.getElementById("projectName").value
 
@@ -202,7 +290,10 @@ async function save(){
   alert("Saved ✅")
 }
 
-/* LOAD */
+////////////////////////////////////////
+//// 📂 LOAD ////
+////////////////////////////////////////
+
 async function load(){
   let name=document.getElementById("projectName").value
 
@@ -213,7 +304,10 @@ async function load(){
   openFile(Object.keys(files)[0])
 }
 
-/* ENV SAVE */
+////////////////////////////////////////
+//// 🔥 ENV ////
+////////////////////////////////////////
+
 async function saveEnv(){
   let project=document.getElementById("projectName").value
   let raw=document.getElementById("envInput").value
@@ -233,7 +327,10 @@ async function saveEnv(){
   alert("ENV Saved 🔥")
 }
 
-/* CHAT */
+////////////////////////////////////////
+//// 🤖 CHAT ////
+////////////////////////////////////////
+
 async function chat(){
   let msg=document.getElementById("chatInput").value
 
@@ -249,7 +346,10 @@ async function chat(){
   openFile("index.html")
 }
 
-/* DOWNLOAD */
+////////////////////////////////////////
+//// 📦 DOWNLOAD ////
+////////////////////////////////////////
+
 async function download(){
   let res=await fetch("/export_zip",{
     method:"POST",
@@ -266,7 +366,10 @@ async function download(){
   a.click()
 }
 
-/* DEPLOY */
+////////////////////////////////////////
+//// 🚀 DEPLOY ////
+////////////////////////////////////////
+
 async function deploy(){
   await fetch("/deploy/github",{
     method:"POST",
@@ -277,8 +380,11 @@ async function deploy(){
   alert("Deploy 🚀")
 }
 
-/* INIT */
-window.onload = () => {
+////////////////////////////////////////
+//// INIT ////
+////////////////////////////////////////
+
+window.onload=()=>{
   openFile("index.html")
 }
 

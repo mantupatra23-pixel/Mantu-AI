@@ -115,6 +115,48 @@ Return ONLY JSON:
 
     return result["choices"][0]["message"]["content"]
 
+@app.post("/stream")
+async def stream_ai(data: dict):
+
+    prompt = data.get("prompt")
+
+    def generate():
+        url = "https://api.groq.com/openai/v1/chat/completions"
+
+        headers = {
+            "Authorization": f"Bearer {GROQ_API_KEY}",
+            "Content-Type": "application/json"
+        }
+
+        payload = {
+            "model": "llama3-70b-8192",
+            "messages": [
+                {"role": "system", "content": "You are a pro AI that builds full apps with index.html, style.css, script.js"},
+                {"role": "user", "content": prompt}
+            ],
+            "stream": True
+        }
+
+        with requests.post(url, headers=headers, json=payload, stream=True) as r:
+            for line in r.iter_lines():
+                if line:
+                    chunk = line.decode("utf-8")
+
+                    if "data:" in chunk:
+                        try:
+                            json_data = chunk.replace("data: ", "")
+                            if json_data.strip() == "[DONE]":
+                                break
+
+                            parsed = json.loads(json_data)
+                            content = parsed["choices"][0]["delta"].get("content","")
+
+                            yield content
+
+                        except:
+                            pass
+
+    return StreamingResponse(generate(), media_type="text/plain")
 
 # =========================
 # 🚀 FULL STACK GENERATOR (ULTRA 🔥)
