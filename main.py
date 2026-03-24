@@ -16,6 +16,17 @@ from fastapi.responses import FileResponse
 # ✅ app define
 app = FastAPI()
 
+# ✅ CORS FIX (IMPORTANT)
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # =========================
 # 🌐 STATIC PROJECT SERVE (NEW 🔥)
 # =========================
