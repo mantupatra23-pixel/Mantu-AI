@@ -20,10 +20,12 @@ body{
   display:flex;
   flex-direction:column;
   border-right:1px solid #1e293b;
+  padding:10px;
+  gap:6px;
 }
 
 .logo{
-  padding:15px;
+  padding:10px;
   font-weight:bold;
   border-bottom:1px solid #1e293b;
 }
@@ -31,7 +33,6 @@ body{
 /* INPUTS */
 textarea, input{
   width:100%;
-  margin-top:8px;
   padding:10px;
   border:none;
   border-radius:8px;
@@ -40,7 +41,6 @@ textarea, input{
 }
 
 button{
-  margin-top:8px;
   padding:10px;
   border:none;
   border-radius:8px;
@@ -76,7 +76,8 @@ button{
   background:black;
   color:#00ff00;
   padding:10px;
-  white-space:pre;
+  overflow:auto;
+  outline:none;
 }
 
 iframe{
@@ -92,27 +93,21 @@ iframe{
 <div class="left">
   <div class="logo">⚡ Mantu AI</div>
 
-  <!-- PROMPT -->
   <textarea id="prompt" placeholder="Build app..."></textarea>
   <button onclick="generate()">⚡ Build App</button>
 
-  <!-- FILE -->
   <input id="fileName" placeholder="new file name">
   <button onclick="addFile()">➕ Add File</button>
 
-  <!-- PROJECT -->
   <input id="projectName" placeholder="Project Name">
   <button onclick="save()">💾 Save</button>
   <button onclick="load()">📂 Load</button>
 
-  <!-- ENV -->
   <textarea id="envInput" placeholder="KEY=VALUE"></textarea>
   <button onclick="saveEnv()">🔥 Save ENV</button>
 
-  <!-- CHAT -->
   <input id="chatInput" placeholder="Ask AI...">
   <button onclick="chat()">🤖 Chat</button>
-
 </div>
 
 <!-- RIGHT -->
@@ -138,7 +133,10 @@ iframe{
 let files = {
   "index.html":"<h1>Hello 🚀</h1>"
 }
+
 let currentFile="index.html"
+let editor = document.getElementById("editor")
+let preview = document.getElementById("preview")
 
 /* GENERATE */
 async function generate(){
@@ -151,7 +149,7 @@ async function generate(){
   })
 
   let data=await res.json()
-  files=data.files
+  files=data.files || {}
 
   openFile(Object.keys(files)[0])
 }
@@ -159,7 +157,7 @@ async function generate(){
 /* OPEN FILE */
 function openFile(name){
   currentFile=name
-  editor.textContent=files[name]
+  editor.textContent=files[name] || ""
   updatePreview()
 }
 
@@ -169,13 +167,17 @@ editor.oninput=()=>{
   updatePreview()
 }
 
-/* PREVIEW */
+/* PREVIEW FIXED */
 function updatePreview(){
   let html = files["index.html"] || ""
   let css = "<style>"+(files["style.css"] || "")+"</style>"
-  let js = "<script>"+(files["script.js"] || "")+"</script>"
 
-  document.getElementById("preview").srcdoc = html + css + js
+  let jsCode = files["script.js"] || ""
+  jsCode = jsCode.replaceAll("</script>", "<\\/script>")
+
+  let js = "<script>" + jsCode + "<\/script>"
+
+  preview.srcdoc = html + css + js
 }
 
 /* ADD FILE */
@@ -197,7 +199,7 @@ async function save(){
     body:JSON.stringify({name,files})
   })
 
-  alert("Saved")
+  alert("Saved ✅")
 }
 
 /* LOAD */
@@ -207,7 +209,7 @@ async function load(){
   let res=await fetch("/load_project/"+name)
   let data=await res.json()
 
-  files=data.files
+  files=data.files || {}
   openFile(Object.keys(files)[0])
 }
 
@@ -228,7 +230,7 @@ async function saveEnv(){
     body:JSON.stringify({project,env})
   })
 
-  alert("ENV Saved")
+  alert("ENV Saved 🔥")
 }
 
 /* CHAT */
@@ -243,18 +245,16 @@ async function chat(){
 
   let data=await res.json()
 
-  files["index.html"] += "\n"+data.reply
+  files["index.html"] += "\n"+(data.reply || "")
   openFile("index.html")
 }
 
 /* DOWNLOAD */
 async function download(){
-  let name="app"
-
   let res=await fetch("/export_zip",{
     method:"POST",
     headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({name,files})
+    body:JSON.stringify({name:"app",files})
   })
 
   let blob=await res.blob()
@@ -278,7 +278,9 @@ async function deploy(){
 }
 
 /* INIT */
-openFile("index.html")
+window.onload = () => {
+  openFile("index.html")
+}
 
 </script>
 
