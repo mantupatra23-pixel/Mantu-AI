@@ -171,10 +171,11 @@ editor.oninput=()=>{
 
 /* PREVIEW */
 function updatePreview(){
-  let html=files["index.html"]||""
-  let css="<style>"+(files["style.css"]||"")+"</style>"
-  let js="<script>"+(files["script.js"]||"")+"</script>"
-  preview.srcdoc=html+css+js
+  let html = files["index.html"] || ""
+  let css = "<style>"+(files["style.css"] || "")+"</style>"
+  let js = "<script>"+(files["script.js"] || "")+"</script>"
+
+  document.getElementById("preview").srcdoc = html + css + js
 }
 
 /* ADD FILE */
